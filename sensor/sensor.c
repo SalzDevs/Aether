@@ -11,7 +11,6 @@ void initSensor(sensor* s){
   s->baterryVoltage = 0;
 }
 
-
 void printSensorData(sensor s) {
   printf("Air Speed:%f\n",s.airSpeed);
   printf("Altitude:%f\n",s.altitude);

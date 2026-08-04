@@ -1,7 +1,7 @@
 # Variables
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c99
-OBJS = main.o sensor.o scheduler.o  
+OBJS = main.o sensor/sensor.o scheduler/scheduler.o  
 TARGET = main
 
 # Final Link Step (combines .o files into executable)

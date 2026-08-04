@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "scheduler.h"
-#include "sensor.h"
+#include "scheduler/scheduler.h"
+#include "sensor/sensor.h"
 
 
 int main() {
