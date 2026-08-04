@@ -1,5 +1,7 @@
 #include "stdio.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 typedef struct {
   float airSpeed;
@@ -18,16 +20,30 @@ void initSensor(sensor* s){
 }
 
 
-void printSensorData(sensor *s) {
-  printf("Air Speed:%f\n",s->airSpeed);
-  printf("Altitude:%f\n",s->altitude);
-  printf("Engine Temperature:%d\n",s->engineTemperature);
-  printf("Fuel Level:%d\n",s->fuelLevel);
-  printf("Baterry Voltage:%d\n",s->baterryVoltage);
+void printSensorData(sensor s) {
+  printf("Air Speed:%f\n",s.airSpeed);
+  printf("Altitude:%f\n",s.altitude);
+  printf("Engine Temperature:%d\n",s.engineTemperature);
+  printf("Fuel Level:%d\n",s.fuelLevel);
+  printf("Baterry Voltage:%d\n",s.baterryVoltage);
 }
+
+void sensorDataUpdate(sensor* s) {
+  srand(time(NULL));
+
+  s->airSpeed = rand(); 
+  s->altitude = rand();
+  s->engineTemperature = rand();
+  s->fuelLevel = rand();
+  s->baterryVoltage = rand();
+}
+
 int main() {
   sensor s;
   initSensor(&s);
-  printSensorData(&s);
+  printSensorData(s);
+  printf("\nAfter Updating Data on sensor\n");
+  sensorDataUpdate(&s);
+  printSensorData(s);
   return 0;
 }
