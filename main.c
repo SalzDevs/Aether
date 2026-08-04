@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include "scheduler.h"
 
 typedef struct {
   float airSpeed;
@@ -45,5 +46,9 @@ int main() {
   printf("\nAfter Updating Data on sensor\n");
   sensorDataUpdate(&s);
   printSensorData(s);
+  
+  Task t;
+  initTask(&t, 30);
+  printTask(t); 
   return 0;
 }
