@@ -74,17 +74,5 @@ int main() {
   printQeue(&sq);
   removeElemFromQeue(&sq);
   printQeue(&sq);
-  /*
-  initSensor(&s);
-  printSensorData(s);
-  printf("\nAfter Updating Data on sensor\n");
-  sensorDataUpdate(&s);
-  printSensorData(s);
-  
-  Task t;
-  initTask(&t, 30);
-  printTask(t); 
-  
-  */ 
   return 0;
 }
