@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 //#include "scheduler/scheduler.h"
 #include "sensor/sensor.h"
@@ -35,6 +36,17 @@ void addElemToQueue(sensorQeue *sq, sensor s) {
   sq->current_size++;
 }
 
+sensor removeElemFromQeue(sensorQeue *sq) {
+  if(sq->current_size==0) {
+    fprintf(stderr,"Cant remove itens from an empty Qeue");
+    return (sensor){0};
+  }
+  sensor s = sq->data[0];
+  memmove(sq->data, sq->data + 1, (sq->current_size - 1) * sizeof(sensor));
+  sq->current_size--;
+  return s;
+}
+
 int main() {
   sensorQeue sq;
   initSensorQeue(&sq);
@@ -42,10 +54,15 @@ int main() {
   sensor s;
   initSensor(&s);
   addElemToQueue(&sq, s);
+  addElemToQueue(&sq,s);
   printSensorData(sq.data[0]);
-  sensorDataUpdate(&s);
   addElemToQueue(&sq, s);
   printSensorData(sq.data[1]);
+  printSensorData(sq.data[2]);
+  printf("Size of sq is:%zu\n",sq.current_size);
+  printf("removed first element from qeue\n");
+  removeElemFromQeue(&sq);
+  printf("New size of sq is:%zu\n",sq.current_size);
   /*
   initSensor(&s);
   printSensorData(s);
