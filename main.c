@@ -47,22 +47,33 @@ sensor removeElemFromQeue(sensorQeue *sq) {
   return s;
 }
 
+void printQeue(sensorQeue* sq) {
+  if (sq->current_size==0) {
+    printf("Qeue is empty!");
+    return;
+  }
+  printf("----------Start of Qeue Data----------\n");
+  printf("size:%zu capacity:%zu\n",sq->current_size,sq->allocated_size); 
+  for (size_t i = 0; i < sq->current_size; i++) {
+    printf("Sensor id:%zu\n",i);
+    printSensorData(sq->data[i]);
+    if (i + 1 < sq->current_size) printf("\n");
+  }
+  printf("----------End of Qeue Data----------\n");
+  printf("\n");
+}
+
 int main() {
   sensorQeue sq;
   initSensorQeue(&sq);
-  printf("sensorQeue data after init: {%zu} {%zu} {%p}\n",sq.allocated_size, sq.current_size, sq.data);
   sensor s;
   initSensor(&s);
   addElemToQueue(&sq, s);
   addElemToQueue(&sq,s);
-  printSensorData(sq.data[0]);
   addElemToQueue(&sq, s);
-  printSensorData(sq.data[1]);
-  printSensorData(sq.data[2]);
-  printf("Size of sq is:%zu\n",sq.current_size);
-  printf("removed first element from qeue\n");
+  printQeue(&sq);
   removeElemFromQeue(&sq);
-  printf("New size of sq is:%zu\n",sq.current_size);
+  printQeue(&sq);
   /*
   initSensor(&s);
   printSensorData(s);
