@@ -1,0 +1,14 @@
+# Build artifacts
+*.o
+*.a
+*.so
+*.dylib
+main
+build/
+dist/
+
+# Local tooling
+.opencode/
+
+# Editor / OS
+.DS_Store
