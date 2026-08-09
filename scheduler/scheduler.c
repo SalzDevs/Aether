@@ -26,5 +26,5 @@ void runTask(Task* t) {
 bool shouldRunTask(uint32_t period, uint64_t last_run) {
   time_t currentTime;
   time(&currentTime);
-  return last_run + period >= (uint64_t)currentTime ? true : false;
+  return last_run + period >= (uint64_t)currentTime;
 }
