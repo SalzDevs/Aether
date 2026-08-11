@@ -4,6 +4,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <time.h>
+#include "../sensor/sensor.h"
+#include "../Qeue/qeue.h"
+
+typedef struct {
+  sensorQeue* q;
+  sensor* s;
+} taskCtx;
 
 typedef struct {
   //period of running the task
@@ -11,11 +18,16 @@ typedef struct {
   // time of the last run
   uint64_t last_run;
   // executable task function
-  void (*function)(void);
+  void (*function)(taskCtx*);
+  // data stucture to hold the arguments of the executable task
+  taskCtx* ctx;
 } Task;
 
+// Initiate the Task context Strucure
+void initTaskCtx(taskCtx *ctx,sensorQeue* q, sensor* s);
+
 // Initiate the Task Strucure
-void initTask(Task* t, uint32_t period, void (*function)(void), uint64_t current_time);
+void initTask(Task* t, uint32_t period, void (*function)(taskCtx*),taskCtx *ctx, uint64_t current_time);
 
 //Prints to standard output task values
 void printTask(Task task);

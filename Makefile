@@ -4,6 +4,11 @@ CFLAGS = -Wall -Wextra -std=c99
 OBJS = main.o sensor/sensor.o scheduler/scheduler.o Qeue/qeue.o 
 TARGET = main
 
+# Raylib flags (installed via Homebrew); prefix any compile line with these
+# to use raylib in your code: $(CC) $(CFLAGS) $(RAYLIB_CFLAGS) ... $(RAYLIB_LIBS)
+RAYLIB_CFLAGS = $(shell pkg-config --cflags raylib)
+RAYLIB_LIBS = $(shell pkg-config --libs raylib)
+
 # Module sources linked into every test binary
 MODULE_SRCS = Qeue/qeue.c sensor/sensor.c scheduler/scheduler.c
 
