@@ -15,7 +15,7 @@ typedef struct {
 } Task;
 
 // Initiate the Task Strucure
-void initTask(Task* t, uint32_t period,  void (*function)(void));
+void initTask(Task* t, uint32_t period, void (*function)(void), uint64_t current_time);
 
 //Prints to standard output task values
 void printTask(Task task);

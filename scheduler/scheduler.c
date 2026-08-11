@@ -2,12 +2,9 @@
 #include <stdint.h>
 #include <stdio.h>
 
-void initTask(Task* t, uint32_t period,void (*function)(void)) {
-  time_t currentTime;
-  time(&currentTime);
-
+void initTask(Task* t, uint32_t period, void (*function)(void), uint64_t current_time) {
   t->period = period;
-  t->last_run = currentTime;
+  t->last_run = current_time;
   t->function = function;
 }
 
