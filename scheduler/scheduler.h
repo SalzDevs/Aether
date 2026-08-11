@@ -21,7 +21,7 @@ void initTask(Task* t, uint32_t period,  void (*function)(void));
 void printTask(Task task);
 
 //Evaluates if enough time as passed to run Task 
-bool shouldRunTask(uint32_t period, uint64_t last_run);
+bool shouldRunTask(uint32_t period, uint64_t last_run, uint64_t current_time);
 
 // Runs the task if the period as passed
 void runTask(Task* t); 

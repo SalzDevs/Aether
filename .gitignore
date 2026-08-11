@@ -4,6 +4,7 @@
 *.so
 *.dylib
 main
+test_*
 build/
 dist/
 

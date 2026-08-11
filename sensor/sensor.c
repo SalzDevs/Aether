@@ -20,8 +20,6 @@ void printSensorData(sensor s) {
 }
 
 void sensorDataUpdate(sensor* s) {
-  srand(time(NULL));
-
   s->airSpeed = rand(); 
   s->altitude = rand();
   s->engineTemperature = rand();
