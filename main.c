@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "raylib.h"
 #include "sensor/sensor.h"
 #include "Qeue/qeue.h"
 #include "scheduler/scheduler.h"
@@ -17,7 +18,13 @@ static void mockSensorTask(void *ctx) {
   sensorDataUpdate(&args->sq->data[args->sensorIdx]);
 }
 
-int main(void) { 
+int main(void) {
+  const int screenWidth = 800;
+  const int screenHeight = 450;
+  
+  InitWindow(screenWidth, screenHeight, "Aether");
+  SetTargetFPS(60);
+  
   srand(time(NULL));
 
   //Initialize queue
@@ -61,7 +68,11 @@ int main(void) {
   initTask(&sensorTask2, 3, mockSensorTask, &args2,time(NULL));
   initTask(&sensorTask3, 3, mockSensorTask, &args3,time(NULL));
 
-  while (1) {
+  while (!WindowShouldClose()) {
+    BeginDrawing();
+    ClearBackground(RAYWHITE);
+    DrawText("Hello", 400, 150, 20, RED);
+    EndDrawing();
     runTask(&sensorTask1);
     runTask(&sensorTask2);
     runTask(&sensorTask3);
