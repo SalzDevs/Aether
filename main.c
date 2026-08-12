@@ -1,53 +1,72 @@
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <time.h>
-#include <unistd.h>
-#include "raylib.h"
+
 #include "sensor/sensor.h"
 #include "Qeue/qeue.h"
 #include "scheduler/scheduler.h"
 
+typedef struct {
+  sensorQeue *sq;
+  int sensorIdx;
+} taskArgs;
 
-static void mockSensorTask(taskCtx* ctx) {
-  sensorDataUpdate(ctx->s);
-  addElemToQueue(ctx->q, *ctx->s);
+static void mockSensorTask(void *ctx) {
+  taskArgs *args = ctx;
+
+  sensorDataUpdate(&args->sq->data[args->sensorIdx]);
 }
 
-int main() {
-  const int screenWidht = 800;
-  const int screenHeight = 450;
-
-  InitWindow(screenWidht, screenHeight, "raylib is here to stay");
-  
-  SetTargetFPS(60);
-
+int main(void) { 
   srand(time(NULL));
-  
-  //initialize qeue
+
+  //Initialize queue
   sensorQeue sq;
   initSensorQeue(&sq);
-  
-  //initialize sensor
-  sensor s;
-  initSensor(&s);
-  Task sensor_task;
-  taskCtx sensor_task_ctx;
-  initTaskCtx(&sensor_task_ctx, &sq, &s);
-  initTask(&sensor_task, 3, mockSensorTask, &sensor_task_ctx, time(NULL));
 
-  while (!WindowShouldClose()) {
-    runTask(&sensor_task);
-    if (sq.current_size > 0) {
-      printQeue(&sq);
-    }
-    BeginDrawing();
-    ClearBackground(RAYWHITE);
-    DrawText("HI how are you?", 190, 200, 20, LIGHTGRAY);
-    EndDrawing();
+  //Initialize sensors
+  sensor s1;
+  sensor s2;
+  sensor s3;
+
+  initSensor(&s1);
+  initSensor(&s2);
+  initSensor(&s3);
+
+  addElemToQueue(&sq, s1);
+  addElemToQueue(&sq, s2);
+  addElemToQueue(&sq, s3);
+
+  taskArgs args1 = {
+    .sq = &sq,
+    .sensorIdx = 0
+  };
+
+  taskArgs args2 = {
+    .sq = &sq,
+    .sensorIdx = 1
+  };
+
+  taskArgs args3 = {
+    .sq = &sq,
+    .sensorIdx = 2
+  };
+
+  // Create tasks
+  Task sensorTask1;
+  Task sensorTask2;
+  Task sensorTask3;
+
+  initTask(&sensorTask1, 3, mockSensorTask, &args1,time(NULL));
+  initTask(&sensorTask2, 3, mockSensorTask, &args2,time(NULL));
+  initTask(&sensorTask3, 3, mockSensorTask, &args3,time(NULL));
+
+  while (1) {
+    runTask(&sensorTask1);
+    runTask(&sensorTask2);
+    runTask(&sensorTask3);
+    printQeue(&sq);
   }
 
-  CloseWindow();
   return 0;
 }
