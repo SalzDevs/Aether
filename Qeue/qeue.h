@@ -2,6 +2,7 @@
 #define QEUE_H
 
 #include "../sensor/sensor.h"
+#include <stdbool.h>
 #include <stddef.h>
 
 typedef struct {
@@ -13,6 +14,7 @@ typedef struct {
 
 void initSensorQeue(sensorQeue* sq); 
 
+bool isSensorQeueEmpty(sensorQeue* sq); 
 
 void addElemToQueue(sensorQeue *sq, sensor s);
 

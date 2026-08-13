@@ -2,11 +2,11 @@
 #include <assert.h>
 #include <stdio.h>
 
-static void dummy_function(void) {}
+static void dummy_function(void *ctx) { (void)ctx; }
 
 static void test_init_sets_period_and_function(void) {
   Task t;
-  initTask(&t, 50, dummy_function, 12345);
+  initTask(&t, 50, dummy_function, NULL, 12345);
   assert(t.period == 50);
   assert(t.function == dummy_function);
   assert(t.last_run == 12345);
@@ -14,7 +14,7 @@ static void test_init_sets_period_and_function(void) {
 
 static void test_init_zero_values(void) {
   Task t;
-  initTask(&t, 0, NULL, 0);
+  initTask(&t, 0, NULL, NULL, 0);
   assert(t.period == 0);
   assert(t.function == NULL);
   assert(t.last_run == 0);

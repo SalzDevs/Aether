@@ -17,8 +17,8 @@ static void test_update_fields_in_range(void) {
   sensor s;
   initSensor(&s);
   sensorDataUpdate(&s);
-  assert(s.airSpeed >= 0 && s.airSpeed <= RAND_MAX);
-  assert(s.altitude >= 0 && s.altitude <= RAND_MAX);
+  assert(s.airSpeed >= 0 && s.airSpeed <= (float)RAND_MAX);
+  assert(s.altitude >= 0 && s.altitude <= (float)RAND_MAX);
   assert(s.engineTemperature >= 0 && s.engineTemperature <= RAND_MAX);
   assert(s.fuelLevel >= 0 && s.fuelLevel <= RAND_MAX);
   assert(s.baterryVoltage >= 0 && s.baterryVoltage <= RAND_MAX);

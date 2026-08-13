@@ -9,6 +9,10 @@ void initSensorQeue(sensorQeue* sq) {
   sq->data = (sensor*)malloc(sq->allocated_size*sizeof(sensor)); 
 }
 
+bool isSensorQeueEmpty(sensorQeue* sq) {
+  return sq->current_size == 0;
+}
+
 
 void addElemToQueue(sensorQeue *sq, sensor s) {
   if ((sq->current_size + 1) == sq->allocated_size) {

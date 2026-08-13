@@ -72,6 +72,14 @@ static void test_growth_when_capacity_reached(void) {
   assert(sq.data[sq.current_size - 1].fuelLevel == 250);
 }
 
+static void test_is_empty_qeue(void) {
+  sensorQeue sq;
+  initSensorQeue(&sq);
+  assert(isSensorQeueEmpty(&sq));
+  addElemToQueue(&sq, make_sensor(10));
+  assert(!isSensorQeueEmpty(&sq));
+}
+
 int main(void) {
   test_init_sets_size_and_capacity();
   test_add_increases_size();
@@ -79,6 +87,7 @@ int main(void) {
   test_remove_shifts_remaining_elements();
   test_remove_from_empty_returns_zeroed_sensor();
   test_growth_when_capacity_reached();
+  test_is_empty_qeue();
   printf("All qeue tests passed\n");
   return 0;
 }
