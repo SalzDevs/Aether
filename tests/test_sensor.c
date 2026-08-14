@@ -12,6 +12,7 @@ static void sensor_init_test() {
 static void sensor_data_init_test() {
   sensorData d;
   initSensorData(&d);
+  assert(d.sensorId == 0);
   assert(d.airSpeed == 0.0);
   assert(d.altitude == 0.0);
   assert(d.engineTemperature == 0);

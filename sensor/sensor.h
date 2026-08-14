@@ -8,6 +8,7 @@ typedef struct {
 } sensor;
 
 typedef struct {
+  int sensorId;
   float airSpeed;
   float altitude;
   int engineTemperature;

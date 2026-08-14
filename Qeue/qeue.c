@@ -49,7 +49,6 @@ void printQeue(sensorQeue* sq) {
   printf("----------Start of Qeue Data----------\n");
   printf("size:%zu capacity:%zu\n",sq->current_size,sq->allocated_size); 
   for (size_t i = 0; i < sq->current_size; i++) {
-    printf("Sensor id:%zu\n",i);
     printSensorData(sq->data[i]);
     if (i + 1 < sq->current_size) printf("\n");
   }

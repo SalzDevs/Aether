@@ -18,6 +18,7 @@ static void mockSensorTask(void *ctx) {
 
   sensorData d;
   initSensorData(&d);
+  d.sensorId = args->s->id;
   sensorDataUpdate(&d);
   addElemToQueue(args->sq, d);
 }
@@ -65,6 +66,11 @@ int main(void) {
   initSensorData(&d2);
   initSensorData(&d3);
   initSensorData(&d4);
+
+  d1.sensorId = 1;
+  d2.sensorId = 2;
+  d3.sensorId = 3;
+  d4.sensorId = 4;
 
   addElemToQueue(&sq, d1);
   addElemToQueue(&sq, d2);
@@ -119,11 +125,12 @@ int main(void) {
     }
 
     EndDrawing();
-    runTask(&sensorTask1);
-    runTask(&sensorTask2);
-    runTask(&sensorTask3);
-    runTask(&sensorTask4);
+    runTask(&sensorTask1, &sq);
+    runTask(&sensorTask2, &sq);
+    runTask(&sensorTask3, &sq);
+    runTask(&sensorTask4, &sq);
     printQeue(&sq);
+    displayBlockHeight = displayBlockHeightCalc(screenHeight, sq.current_size);
   }
   return 0;
 }
