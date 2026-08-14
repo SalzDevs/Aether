@@ -1,0 +1,49 @@
+app:
+  name: Aether
+  screenWidth: 800
+  screenHeight: 450
+  targetFPS: 60
+
+scheduler:
+  timeUnit: seconds
+
+sensors:
+  - id: 1
+    name: airspeed_sensor
+    period: 3
+    data:
+      airSpeed: 120.5
+      altitude: 1000.0
+      engineTemperature: 85
+      fuelLevel: 60
+      baterryVoltage: 12
+
+  - id: 2
+    name: altitude_sensor
+    period: 3
+    data:
+      airSpeed: 110.2
+      altitude: 1200.0
+      engineTemperature: 90
+      fuelLevel: 55
+      baterryVoltage: 12
+
+  - id: 3
+    name: engine_sensor
+    period: 3
+    data:
+      airSpeed: 105.0
+      altitude: 980.0
+      engineTemperature: 92
+      fuelLevel: 48
+      baterryVoltage: 11
+
+  - id: 4
+    name: fuel_sensor
+    period: 3
+    data:
+      airSpeed: 115.8
+      altitude: 1100.0
+      engineTemperature: 87
+      fuelLevel: 42
+      baterryVoltage: 12
