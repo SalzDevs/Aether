@@ -1,4 +1,5 @@
 #include "sensor.h"
+#include <stddef.h>
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
@@ -19,6 +20,11 @@ void printSensorData(sensor s) {
   printf("Baterry Voltage:%d\n",s.baterryVoltage);
 }
 
+int sensorToString(sensor s, char* buf, size_t bufSize) {
+  return snprintf(buf,bufSize,"Air Speed:%f Altitude:%f Engine Temp:%d Fuel:%d Battery:%d\n",
+    s.airSpeed, s.altitude, s.engineTemperature, s.fuelLevel, s.baterryVoltage);
+}
+
 void sensorDataUpdate(sensor* s) {
   s->airSpeed = rand(); 
   s->altitude = rand();
@@ -26,3 +32,5 @@ void sensorDataUpdate(sensor* s) {
   s->fuelLevel = rand();
   s->baterryVoltage = rand();
 }
+
+

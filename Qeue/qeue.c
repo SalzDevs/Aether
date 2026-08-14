@@ -42,7 +42,7 @@ sensor removeElemFromQeue(sensorQeue *sq) {
 }
 
 void printQeue(sensorQeue* sq) {
-  if (sq->current_size==0) {
+  if (isSensorQeueEmpty(sq)) {
     printf("Qeue is empty!");
     return;
   }

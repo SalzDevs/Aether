@@ -84,17 +84,22 @@ int main(void) {
   initTask(&sensorTask4, 3, mockSensorTask, &args4,time(NULL));
   
   int displayBlockHeight = displayBlockHeightCalc(screenHeight,sq.current_size);
+  char buf[128];
 
   while (!WindowShouldClose()) {
     BeginDrawing();
     ClearBackground(RAYWHITE);
+    
     for (size_t i = 0; i < sq.current_size; i++) {
+      sensorToString(sq.data[i], buf, sizeof(buf));
+      DrawText(buf, screenWidth/2-300, (displayBlockHeight*i)+(displayBlockHeight/2), 15, BLUE);
       DrawLine(0, displayBlockHeight*i, screenWidth, displayBlockHeight*i, RED);
     }
     EndDrawing();
     runTask(&sensorTask1);
     runTask(&sensorTask2);
     runTask(&sensorTask3);
+    runTask(&sensorTask4);
     printQeue(&sq);
   }
 
