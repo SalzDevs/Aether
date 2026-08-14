@@ -9,13 +9,17 @@
 
 typedef struct {
   sensorQeue *sq;
+  sensor *s;
   int sensorIdx;
 } taskArgs;
 
 static void mockSensorTask(void *ctx) {
   taskArgs *args = ctx;
 
-  sensorDataUpdate(&args->sq->data[args->sensorIdx]);
+  sensorData d;
+  initSensorData(&d);
+  sensorDataUpdate(&d);
+  addElemToQueue(args->sq, d);
 }
 
 static int displayBlockHeightCalc(int screenHeight, int amountOfSensors) {
@@ -46,35 +50,49 @@ int main(void) {
   sensor s3;
   sensor s4;
 
-  initSensor(&s1);
-  initSensor(&s2);
-  initSensor(&s3);
-  initSensor(&s4);
+  initSensor(&s1, 1);
+  initSensor(&s2, 2);
+  initSensor(&s3, 3);
+  initSensor(&s4, 4);
 
-  addElemToQueue(&sq, s1);
-  addElemToQueue(&sq, s2);
-  addElemToQueue(&sq, s3);
-  addElemToQueue(&sq, s4);
+  //Reserve a data slot in the queue for each sensor
+  sensorData d1;
+  sensorData d2;
+  sensorData d3;
+  sensorData d4;
+
+  initSensorData(&d1);
+  initSensorData(&d2);
+  initSensorData(&d3);
+  initSensorData(&d4);
+
+  addElemToQueue(&sq, d1);
+  addElemToQueue(&sq, d2);
+  addElemToQueue(&sq, d3);
+  addElemToQueue(&sq, d4);
 
   taskArgs args1 = {
     .sq = &sq,
+    .s = &s1,
     .sensorIdx = 0
   };
 
   taskArgs args2 = {
     .sq = &sq,
+    .s = &s2,
     .sensorIdx = 1
   };
 
   taskArgs args3 = {
     .sq = &sq,
+    .s = &s3,
     .sensorIdx = 2
   };
 
-  
   taskArgs args4 = {
     .sq = &sq,
-    .sensorIdx = 2
+    .s = &s4,
+    .sensorIdx = 3
   };
 
   // Create tasks
@@ -95,7 +113,7 @@ int main(void) {
     ClearBackground(BACKGROUND_COLOR);
     DrawText(TextFormat("Time: %.02f", GetTime()), 0, 0, 10, TIMER_TEXT_COLOR); 
     for (size_t i = 0; i < sq.current_size; i++) {
-      sensorToString(sq.data[i], buf, sizeof(buf));
+      sensorDataToString(sq.data[i], buf, sizeof(buf));
       DrawText(buf, screenWidth/2-300, (displayBlockHeight*i)+(displayBlockHeight/2), 15, DATA_TEXT_COLOR);
       DrawLine(0, displayBlockHeight*i, screenWidth, displayBlockHeight*i, DIVIDER_COLOR);
     }

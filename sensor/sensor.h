@@ -4,20 +4,25 @@
 #include <stddef.h>
 
 typedef struct {
+  int id;
+} sensor;
+
+typedef struct {
   float airSpeed;
   float altitude;
   int engineTemperature;
   int fuelLevel;
   int baterryVoltage;
-} sensor;
+} sensorData;
 
-void initSensor(sensor* s);
+void initSensor(sensor* s, int id);
 
-void printSensorData(sensor s); 
+void initSensorData(sensorData* d);
 
-int sensorToString(sensor s, char* buf, size_t bufSize);
+void printSensorData(sensorData d);
 
-void sensorDataUpdate(sensor* s);
+int sensorDataToString(sensorData d, char* buf, size_t bufSize);
 
+void sensorDataUpdate(sensorData* d);
 
 #endif

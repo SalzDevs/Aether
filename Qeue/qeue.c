@@ -6,7 +6,7 @@
 void initSensorQeue(sensorQeue* sq) {
   sq->allocated_size = 100;
   sq->current_size = 0;
-  sq->data = (sensor*)malloc(sq->allocated_size*sizeof(sensor)); 
+  sq->data = (sensorData*)malloc(sq->allocated_size*sizeof(sensorData)); 
 }
 
 bool isSensorQeueEmpty(sensorQeue* sq) {
@@ -14,10 +14,10 @@ bool isSensorQeueEmpty(sensorQeue* sq) {
 }
 
 
-void addElemToQueue(sensorQeue *sq, sensor s) {
+void addElemToQueue(sensorQeue *sq, sensorData d) {
   if ((sq->current_size + 1) == sq->allocated_size) {
     size_t new_size = sq->allocated_size * 2;
-    sensor *temp = realloc(sq->data, new_size * sizeof(sensor));
+    sensorData *temp = realloc(sq->data, new_size * sizeof(sensorData));
     if (temp == NULL) {
       fprintf(stderr,"Realocation of qeue failed");
       return; 
@@ -26,19 +26,19 @@ void addElemToQueue(sensorQeue *sq, sensor s) {
     sq->allocated_size = new_size; 
   }
 
-  sq->data[sq->current_size] = s;
+  sq->data[sq->current_size] = d;
   sq->current_size++;
 }
 
-sensor removeElemFromQeue(sensorQeue *sq) {
+sensorData removeElemFromQeue(sensorQeue *sq) {
   if(sq->current_size==0) {
     fprintf(stderr,"Cant remove itens from an empty Qeue");
-    return (sensor){0};
+    return (sensorData){0};
   }
-  sensor s = sq->data[0];
-  memmove(sq->data, sq->data + 1, (sq->current_size - 1) * sizeof(sensor));
+  sensorData d = sq->data[0];
+  memmove(sq->data, sq->data + 1, (sq->current_size - 1) * sizeof(sensorData));
   sq->current_size--;
-  return s;
+  return d;
 }
 
 void printQeue(sensorQeue* sq) {

@@ -8,7 +8,7 @@
 typedef struct {
   size_t allocated_size;
   size_t current_size;
-  sensor* data;
+  sensorData* data;
 } sensorQeue;
 
 
@@ -16,9 +16,9 @@ void initSensorQeue(sensorQeue* sq);
 
 bool isSensorQeueEmpty(sensorQeue* sq); 
 
-void addElemToQueue(sensorQeue *sq, sensor s);
+void addElemToQueue(sensorQeue *sq, sensorData d);
 
-sensor removeElemFromQeue(sensorQeue *sq);
+sensorData removeElemFromQeue(sensorQeue *sq);
 
 void printQeue(sensorQeue* sq);
 
