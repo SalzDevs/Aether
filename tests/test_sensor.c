@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 static void sensor_init_test() {
   sensor s;
@@ -58,12 +59,22 @@ static void test_update_is_deterministic_with_seed(void) {
   assert(d1.baterryVoltage == d2.baterryVoltage);
 }
 
+static void test_to_string_contains_sensor_id(void) {
+  sensorData d;
+  initSensorData(&d);
+  d.sensorId = 7;
+  char buf[256];
+  sensorDataToString(d, buf, sizeof(buf));
+  assert(strstr(buf, "Sensor 7") != NULL);
+}
+
 int main() {
   sensor_init_test();
   sensor_data_init_test();
   test_update_fields_in_range();
   test_consecutive_updates_differ();
   test_update_is_deterministic_with_seed();
+  test_to_string_contains_sensor_id();
   printf("All sensor tests passed\n");
   return 0;
 }
