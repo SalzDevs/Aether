@@ -22,6 +22,11 @@ static int displayBlockHeightCalc(int screenHeight, int amountOfSensors) {
   return screenHeight/amountOfSensors;
 } 
 
+#define BACKGROUND_COLOR ((Color){ 24, 26, 32, 255 })
+#define TIMER_TEXT_COLOR ((Color){ 150, 158, 172, 255 })
+#define DATA_TEXT_COLOR  ((Color){ 110, 190, 255, 255 })
+#define DIVIDER_COLOR    ((Color){ 52, 57, 70, 255 })
+
 int main(void) {
   const int screenWidth = 800;
   const int screenHeight = 450;
@@ -87,12 +92,12 @@ int main(void) {
   char buf[128];
   while (!WindowShouldClose()) {
     BeginDrawing();
-    ClearBackground(RAYWHITE);
-    DrawText(TextFormat("Time: %.02f", GetTime()), 0, 0, 10, BLACK); 
+    ClearBackground(BACKGROUND_COLOR);
+    DrawText(TextFormat("Time: %.02f", GetTime()), 0, 0, 10, TIMER_TEXT_COLOR); 
     for (size_t i = 0; i < sq.current_size; i++) {
       sensorToString(sq.data[i], buf, sizeof(buf));
-      DrawText(buf, screenWidth/2-300, (displayBlockHeight*i)+(displayBlockHeight/2), 15, BLUE);
-      DrawLine(0, displayBlockHeight*i, screenWidth, displayBlockHeight*i, RED);
+      DrawText(buf, screenWidth/2-300, (displayBlockHeight*i)+(displayBlockHeight/2), 15, DATA_TEXT_COLOR);
+      DrawLine(0, displayBlockHeight*i, screenWidth, displayBlockHeight*i, DIVIDER_COLOR);
     }
 
     EndDrawing();
