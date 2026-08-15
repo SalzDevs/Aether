@@ -2,14 +2,13 @@
 #define CONFIG_H
 
 #include <stddef.h>
-#include <stdlib.h>
+#include "../sensor/sensor.h"
 
 typedef enum {
   CONFIG_OK,
   CONFIG_ERROR
 } configStatus;
 
-configStatus readConfigFile(const char *fileName, char** buf_out);
-configStatus fileToSensors(char* fileName);
+sensorData* fileToSensors(char* fileName, size_t* count);
 
 #endif

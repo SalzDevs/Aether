@@ -1,15 +1,36 @@
 #include "../config/config.h"
+#include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-static void test_read_config_file(void) {
-  char* buf_out = NULL;
-  if (readConfigFile("config/sensors.yaml", &buf_out) == CONFIG_OK) {
-    printf("%s", buf_out);
-    free(buf_out);
-  }
+static void test_file_to_sensors(void) {
+  size_t count = 0;
+  sensorData* sensors = fileToSensors("config/sensors.yaml", &count);
+
+  assert(sensors != NULL);
+  assert(count == 4);
+  assert(sensors[0].sensorId == 1);
+  assert(sensors[0].airSpeed == 120.5f);
+  assert(sensors[0].altitude == 1000.0f);
+  assert(sensors[0].engineTemperature == 85);
+  assert(sensors[0].fuelLevel == 60);
+  assert(sensors[0].baterryVoltage == 12);
+  assert(sensors[3].sensorId == 4);
+  assert(sensors[3].fuelLevel == 42);
+
+  free(sensors);
+}
+
+static void test_file_to_sensors_missing_file(void) {
+  size_t count = 0;
+  sensorData* sensors = fileToSensors("config/does_not_exist.yaml", &count);
+  assert(sensors == NULL);
+  assert(count == 0);
 }
 
 int main() {
-  test_read_config_file();
-  return 0; 
+  test_file_to_sensors();
+  test_file_to_sensors_missing_file();
+  printf("All config tests passed\n");
+  return 0;
 }
