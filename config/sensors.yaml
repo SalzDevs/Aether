@@ -38,3 +38,13 @@ sensors:
       engineTemperature: 87
       fuelLevel: 42
       baterryVoltage: 12
+
+  - id: 5 
+    name: fuel_sensor
+    period: 3
+    data:
+      airSpeed: 115.8
+      altitude: 1100.0
+      engineTemperature: 87
+      fuelLevel: 42
+      baterryVoltage: 12
