@@ -25,7 +25,23 @@ static void mockSensorTask(void *ctx) {
 
 static int displayBlockHeightCalc(int screenHeight, int amountOfSensors) {
   return screenHeight/amountOfSensors;
-} 
+}
+
+static int shrinkFontSize(const char* buf, int startFontSize, int maxWidth, int *outTextWidth) {
+  int fontSize = startFontSize;
+  int textWidth = MeasureText(buf, fontSize);
+
+  while ((textWidth > maxWidth) && (fontSize > 1)) {
+    fontSize--;
+    textWidth = MeasureText(buf, fontSize);
+  }
+
+  if (outTextWidth) {
+    *outTextWidth = textWidth; 
+  }
+
+  return fontSize;
+}
 
 #define BACKGROUND_COLOR ((Color){ 24, 26, 32, 255 })
 #define TIMER_TEXT_COLOR ((Color){ 150, 158, 172, 255 })
@@ -79,13 +95,9 @@ int main(void) {
     for (size_t i = 0; i < sq.current_size; i++) {
       sensorDataToString(sq.data[i], buf, sizeof(buf));
 
-      int fontSize = displayBlockHeight - 10; 
+      int startFontSize = displayBlockHeight - 10; 
 
-      textWidth = MeasureText(buf, fontSize);
-      while ((textWidth > maxWidth) && (fontSize > 1)) {
-        fontSize--;
-        textWidth = MeasureText(buf, fontSize);
-      }
+      int fontSize = shrinkFontSize(buf, startFontSize, maxWidth, &textWidth);
 
       int posX = (screenWidth - textWidth) / 2;
       int posY = (displayBlockHeight * i) + (displayBlockHeight - fontSize) / 2;
