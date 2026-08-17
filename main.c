@@ -66,7 +66,6 @@ int main(void) {
   int displayBlockHeight = displayBlockHeightCalc(screenHeight, sq.current_size);
   char buf[128];
 
-  int fontSize;
   int textWidth;
   while (!WindowShouldClose()) {
     BeginDrawing();
