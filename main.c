@@ -35,10 +35,10 @@ static int displayBlockHeightCalc(int screenHeight, int amountOfSensors) {
 int main(void) {
   const int screenWidth = 800;
   const int screenHeight = 450;
-  
+
   InitWindow(screenWidth, screenHeight, "Aether");
   SetTargetFPS(60);
-  
+
   srand(time(NULL));
 
   //Load sensors from config
@@ -65,20 +65,42 @@ int main(void) {
 
   int displayBlockHeight = displayBlockHeightCalc(screenHeight, sq.current_size);
   char buf[128];
+
+  int fontSize;
+  int textWidth;
   while (!WindowShouldClose()) {
     BeginDrawing();
     ClearBackground(BACKGROUND_COLOR);
+
     DrawText(TextFormat("Time: %.02f", GetTime()), 0, 0, 10, TIMER_TEXT_COLOR); 
+
+    int padding = 20; 
+    int maxWidth = screenWidth - (padding * 2);
+
     for (size_t i = 0; i < sq.current_size; i++) {
       sensorDataToString(sq.data[i], buf, sizeof(buf));
-      DrawText(buf, screenWidth/2-300, (displayBlockHeight*i)+(displayBlockHeight/2), 15, DATA_TEXT_COLOR);
-      DrawLine(0, displayBlockHeight*i, screenWidth, displayBlockHeight*i, DIVIDER_COLOR);
+
+      int fontSize = displayBlockHeight - 10; 
+
+      textWidth = MeasureText(buf, fontSize);
+      while ((textWidth > maxWidth) && (fontSize > 1)) {
+        fontSize--;
+        textWidth = MeasureText(buf, fontSize);
+      }
+
+      int posX = (screenWidth - textWidth) / 2;
+      int posY = (displayBlockHeight * i) + (displayBlockHeight - fontSize) / 2;
+
+      DrawText(buf, posX, posY, fontSize, DATA_TEXT_COLOR);
+      DrawLine(0, displayBlockHeight * i, screenWidth, displayBlockHeight * i, DIVIDER_COLOR);
     }
 
     EndDrawing();
+
     for (size_t i = 0; i < sensorCount; i++) {
       runTask(&tasks[i], &sq);
     }
+
     printQeue(&sq);
     displayBlockHeight = displayBlockHeightCalc(screenHeight, sq.current_size);
   }
