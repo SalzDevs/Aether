@@ -14,6 +14,8 @@ typedef struct {
 
 void initSensorQeue(sensorQeue* sq); 
 
+void destroySensorQeue(sensorQeue* sq);
+
 bool isSensorQeueEmpty(sensorQeue* sq); 
 
 void addElemToQueue(sensorQeue *sq, sensorData d);
