@@ -1,7 +1,6 @@
 sensors:
   - id: 1
     name: airspeed_sensor
-    period: 3
     data:
       airSpeed: 120.5
       altitude: 1000.0
@@ -11,7 +10,6 @@ sensors:
 
   - id: 2
     name: altitude_sensor
-    period: 3
     data:
       airSpeed: 110.2
       altitude: 1200.0
@@ -21,7 +19,6 @@ sensors:
 
   - id: 3
     name: engine_sensor
-    period: 3
     data:
       airSpeed: 105.0
       altitude: 980.0
@@ -31,7 +28,6 @@ sensors:
 
   - id: 4
     name: fuel_sensor
-    period: 3
     data:
       airSpeed: 115.8
       altitude: 1100.0
@@ -39,9 +35,8 @@ sensors:
       fuelLevel: 42
       baterryVoltage: 12
 
-  - id: 5 
-    name: fuel_sensor
-    period: 3
+  - id: 5
+    name: battery_sensor
     data:
       airSpeed: 115.8
       altitude: 1100.0
