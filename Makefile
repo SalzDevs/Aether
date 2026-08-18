@@ -9,13 +9,13 @@ TARGET = main
 OBJS = main.o sensor/sensor.o scheduler/scheduler.o Qeue/qeue.o config/config.o
 
 # Raylib flags, required only when building the application.
-RAYLIB_CFLAGS = $(shell pkg-config --cflags raylib)
-RAYLIB_LIBS = $(shell pkg-config --libs raylib)
+RAYLIB_CFLAGS = $(shell pkg-config --cflags raylib 2>/dev/null)
+RAYLIB_LIBS = $(shell pkg-config --libs raylib 2>/dev/null)
 
 # Module sources linked into every test binary.
 MODULE_SRCS = Qeue/qeue.c sensor/sensor.c scheduler/scheduler.c config/config.c
 
-# Auto-discover tests:
+# Auto-discover tests.
 # Every file named tests/test_*.c becomes its own executable.
 TEST_SRCS = $(wildcard tests/test_*.c)
 TEST_BINS = $(patsubst tests/test_%.c,test_%,$(TEST_SRCS))
