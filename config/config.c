@@ -65,5 +65,11 @@ while (*count < MAX_SENSORS &&
   }
 
   free(contents);
+  
+  if (*count == 0) {
+    free(sensors);
+    return NULL;
+  }
+  
   return sensors;
 }
