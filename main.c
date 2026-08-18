@@ -113,5 +113,6 @@ int main(void) {
 
   free(args);
   free(tasks);
+  destroySensorQeue(&sq);
   return 0;
 }
