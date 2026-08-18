@@ -15,7 +15,7 @@ bool isSensorQeueEmpty(sensorQeue* sq) {
 
 
 void addElemToQueue(sensorQeue *sq, sensorData d) {
-  if ((sq->current_size + 1) == sq->allocated_size) {
+  if (sq->current_size == sq->allocated_size) { {
     size_t new_size = sq->allocated_size * 2;
     sensorData *temp = realloc(sq->data, new_size * sizeof(sensorData));
     if (temp == NULL) {
