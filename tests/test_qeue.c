@@ -102,6 +102,7 @@ int main(void) {
   test_remove_from_empty_returns_zeroed_data();
   test_growth_when_capacity_reached();
   test_is_empty_qeue();
+  test_destroy_resets_queue();
   printf("All qeue tests passed\n");
   return 0;
 }
