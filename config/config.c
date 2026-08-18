@@ -46,16 +46,20 @@ sensorData* fileToSensors(char* fileName, size_t* count) {
   if (nl != NULL) p = nl + 1;
 
   int consumed;
-  while (*count < MAX_SENSORS &&
-         sscanf(p,
-      " - id: %d %*s %*s %*s %*s %*s airSpeed: %f %*s %f %*s %d %*s %d %*s %d%n",
-      &sensors[*count].sensorId,
-      &sensors[*count].airSpeed,
-      &sensors[*count].altitude,
-      &sensors[*count].engineTemperature,
-      &sensors[*count].fuelLevel,
-      &sensors[*count].baterryVoltage,
-      &consumed) == 6) {
+while (*count < MAX_SENSORS &&
+       sscanf(
+           p,
+           " - id: %d name: %*s data: "
+           "airSpeed: %f altitude: %f engineTemperature: %d "
+           "fuelLevel: %d baterryVoltage: %d%n",
+           &sensors[*count].sensorId,
+           &sensors[*count].airSpeed,
+           &sensors[*count].altitude,
+           &sensors[*count].engineTemperature,
+           &sensors[*count].fuelLevel,
+           &sensors[*count].baterryVoltage,
+           &consumed
+       ) == 6) {
     (*count)++;
     p += consumed;
   }
