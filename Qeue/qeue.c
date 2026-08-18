@@ -9,6 +9,17 @@ void initSensorQeue(sensorQeue* sq) {
   sq->data = (sensorData*)malloc(sq->allocated_size*sizeof(sensorData)); 
 }
 
+void destroySensorQeue(sensorQeue* sq) {
+  if (sq == NULL) {
+    return;
+  }
+
+  free(sq->data);
+  sq->data = NULL;
+  sq->allocated_size = 0;
+  sq->current_size = 0;
+}
+
 bool isSensorQeueEmpty(sensorQeue* sq) {
   return sq->current_size == 0;
 }
