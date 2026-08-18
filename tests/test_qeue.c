@@ -80,6 +80,20 @@ static void test_is_empty_qeue(void) {
   assert(!isSensorQeueEmpty(&sq));
 }
 
+static void test_destroy_resets_queue(void) {
+  sensorQeue sq;
+  initSensorQeue(&sq);
+
+  addElemToQueue(&sq, make_sensor_data(10));
+  destroySensorQeue(&sq);
+
+  assert(sq.data == NULL);
+  assert(sq.current_size == 0);
+  assert(sq.allocated_size == 0);
+
+  destroySensorQeue(&sq);
+}
+
 int main(void) {
   test_init_sets_size_and_capacity();
   test_add_increases_size();
