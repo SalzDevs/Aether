@@ -109,7 +109,6 @@ Each sensor requires:
 | `fuelLevel` | Simulated fuel level |
 | `baterryVoltage` | Simulated battery voltage |
 
-> `baterryVoltage` reflects the current field name in the C code and configuration. It can be renamed to `batteryVoltage` in a future cleanup change.
 
 ## Project structure
 
