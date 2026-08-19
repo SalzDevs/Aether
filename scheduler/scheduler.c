@@ -15,10 +15,16 @@ void printTask(Task task) {
   printf("Task Last Run:%lu\n", task.last_run);
 }
 
-void runTask(Task* t,sensorQeue *sq) {
-  if (shouldRunTask(t->period, t->last_run, (uint64_t)time(NULL))) {
+void runTask(Task* t, sensorQeue* sq) {
+  if (t == NULL || sq == NULL || t->function == NULL) {
+    return;
+  }
+
+  uint64_t currentTime = (uint64_t)time(NULL);
+
+  if (shouldRunTask(t->period, t->last_run, currentTime)) {
     t->function(t->ctx);
-    t->last_run = time(NULL);
+    t->last_run = currentTime;
     removeElemFromQeue(sq);
   }
 }
