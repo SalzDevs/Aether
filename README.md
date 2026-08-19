@@ -1,6 +1,6 @@
 # Aether
 <p align="center">
-  <img src="assets/telemetry-beacon.png" width="180" alt="Telemetry beacon logo">
+  <img src="logo.png" width="180" alt="logo">
 </p>
 
 Aether is a small C application that simulates sensor telemetry and displays it in a real-time Raylib dashboard.
