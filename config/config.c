@@ -51,13 +51,13 @@ while (*count < MAX_SENSORS &&
            p,
            " - id: %d name: %*s data: "
            "airSpeed: %f altitude: %f engineTemperature: %d "
-           "fuelLevel: %d baterryVoltage: %d%n",
+           "fuelLevel: %d batteryVoltage: %d%n",
            &sensors[*count].sensorId,
            &sensors[*count].airSpeed,
            &sensors[*count].altitude,
            &sensors[*count].engineTemperature,
            &sensors[*count].fuelLevel,
-           &sensors[*count].baterryVoltage,
+           &sensors[*count].batteryVoltage,
            &consumed
        ) == 6) {
     (*count)++;

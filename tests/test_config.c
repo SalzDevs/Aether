@@ -15,7 +15,7 @@ static void test_file_to_sensors(void) {
   assert(sensors[0].altitude == 1000.0f);
   assert(sensors[0].engineTemperature == 85);
   assert(sensors[0].fuelLevel == 60);
-  assert(sensors[0].baterryVoltage == 12);
+  assert(sensors[0].batteryVoltage == 12);
 
   assert(sensors[3].sensorId == 4);
   assert(sensors[3].fuelLevel == 42);
@@ -25,7 +25,7 @@ static void test_file_to_sensors(void) {
   assert(sensors[4].altitude == 1100.0f);
   assert(sensors[4].engineTemperature == 87);
   assert(sensors[4].fuelLevel == 42);
-  assert(sensors[4].baterryVoltage == 12);
+  assert(sensors[4].batteryVoltage == 12);
 
   free(sensors);
 }

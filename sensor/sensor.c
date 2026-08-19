@@ -12,7 +12,7 @@ void initSensorData(sensorData* d) {
   d->altitude = 0.0;
   d->engineTemperature = 0;
   d->fuelLevel = 0;
-  d->baterryVoltage = 0;
+  d->batteryVoltage = 0;
 }
 
 void printSensorData(sensorData d) {
@@ -21,12 +21,12 @@ void printSensorData(sensorData d) {
   printf("Altitude:%f\n", d.altitude);
   printf("Engine Temperature:%d\n", d.engineTemperature);
   printf("Fuel Level:%d\n", d.fuelLevel);
-  printf("Baterry Voltage:%d\n", d.baterryVoltage);
+  printf("Battery Voltage:%d\n", d.batteryVoltage);
 }
 
 int sensorDataToString(sensorData d, char* buf, size_t bufSize) {
   return snprintf(buf, bufSize, "Sensor %d | Air Speed:%f Altitude:%f Engine Temp:%d Fuel:%d Battery:%d\n",
-    d.sensorId, d.airSpeed, d.altitude, d.engineTemperature, d.fuelLevel, d.baterryVoltage);
+    d.sensorId, d.airSpeed, d.altitude, d.engineTemperature, d.fuelLevel, d.batteryVoltage);
 }
 
 void sensorDataUpdate(sensorData* d) {
@@ -34,5 +34,5 @@ void sensorDataUpdate(sensorData* d) {
   d->altitude = rand();
   d->engineTemperature = rand();
   d->fuelLevel = rand();
-  d->baterryVoltage = rand();
+  d->batteryVoltage = rand();
 }

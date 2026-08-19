@@ -6,7 +6,7 @@ sensors:
       altitude: 1000.0
       engineTemperature: 85
       fuelLevel: 60
-      baterryVoltage: 12
+      batteryVoltage: 12
 
   - id: 2
     name: altitude_sensor
@@ -15,7 +15,7 @@ sensors:
       altitude: 1200.0
       engineTemperature: 90
       fuelLevel: 55
-      baterryVoltage: 12
+      batteryVoltage: 12
 
   - id: 3
     name: engine_sensor
@@ -24,7 +24,7 @@ sensors:
       altitude: 980.0
       engineTemperature: 92
       fuelLevel: 48
-      baterryVoltage: 11
+      batteryVoltage: 11
 
   - id: 4
     name: fuel_sensor
@@ -33,7 +33,7 @@ sensors:
       altitude: 1100.0
       engineTemperature: 87
       fuelLevel: 42
-      baterryVoltage: 12
+      batteryVoltage: 12
 
   - id: 5
     name: battery_sensor
@@ -42,4 +42,4 @@ sensors:
       altitude: 1100.0
       engineTemperature: 87
       fuelLevel: 42
-      baterryVoltage: 12
+      batteryVoltage: 12

@@ -94,7 +94,7 @@ sensors:
       altitude: 1000.0
       engineTemperature: 85
       fuelLevel: 60
-      baterryVoltage: 12
+      batteryVoltage: 12
 ```
 
 Each sensor requires:
@@ -107,7 +107,7 @@ Each sensor requires:
 | `altitude` | Simulated altitude value |
 | `engineTemperature` | Simulated engine temperature |
 | `fuelLevel` | Simulated fuel level |
-| `baterryVoltage` | Simulated battery voltage |
+| `batteryVoltage` | Simulated battery voltage |
 
 
 ## Project structure

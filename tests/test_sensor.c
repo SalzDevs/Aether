@@ -18,7 +18,7 @@ static void sensor_data_init_test() {
   assert(d.altitude == 0.0);
   assert(d.engineTemperature == 0);
   assert(d.fuelLevel == 0);
-  assert(d.baterryVoltage == 0);
+  assert(d.batteryVoltage == 0);
 }
 
 static void test_update_fields_in_range(void) {
@@ -29,7 +29,7 @@ static void test_update_fields_in_range(void) {
   assert(d.altitude >= 0 && d.altitude <= (float)RAND_MAX);
   assert(d.engineTemperature >= 0 && d.engineTemperature <= RAND_MAX);
   assert(d.fuelLevel >= 0 && d.fuelLevel <= RAND_MAX);
-  assert(d.baterryVoltage >= 0 && d.baterryVoltage <= RAND_MAX);
+  assert(d.batteryVoltage >= 0 && d.batteryVoltage <= RAND_MAX);
 }
 
 static void test_consecutive_updates_differ(void) {
@@ -56,7 +56,7 @@ static void test_update_is_deterministic_with_seed(void) {
   assert(d1.altitude == d2.altitude);
   assert(d1.engineTemperature == d2.engineTemperature);
   assert(d1.fuelLevel == d2.fuelLevel);
-  assert(d1.baterryVoltage == d2.baterryVoltage);
+  assert(d1.batteryVoltage == d2.batteryVoltage);
 }
 
 static void test_to_string_contains_sensor_id(void) {

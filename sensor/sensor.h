@@ -13,7 +13,7 @@ typedef struct {
   float altitude;
   int engineTemperature;
   int fuelLevel;
-  int baterryVoltage;
+  int batteryVoltage;
 } sensorData;
 
 void initSensor(sensor* s, int id);
