@@ -5,7 +5,9 @@
 
 static void test_file_to_sensors(void) {
   size_t count = 0;
-  sensorData* sensors = fileToSensors("config/sensors.yaml", &count);
+  sensorData* sensors = NULL;
+  bool ok = LoadSensorConfig("config/sensors.yaml", &count, &sensors);
+  assert(ok);
 
   assert(sensors != NULL);
   assert(count == 5);
@@ -32,8 +34,10 @@ static void test_file_to_sensors(void) {
 
 static void test_file_to_sensors_missing_file(void) {
   size_t count = 0;
-  sensorData* sensors = fileToSensors("config/does_not_exist.yaml", &count);
+  sensorData* sensors = NULL;
+  bool ok = LoadSensorConfig("config/does_not_exist.yaml", &count, &sensors);
 
+  assert(!ok);
   assert(sensors == NULL);
   assert(count == 0);
 }

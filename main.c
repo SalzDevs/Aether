@@ -54,9 +54,9 @@ int main(void) {
 
   //Load sensors from config
   size_t sensorCount;
-  sensorData* configSensors = fileToSensors("config/sensors.yaml", &sensorCount);
-  if (configSensors == NULL) return 1;
-
+  sensorData* configSensors = NULL;
+  bool validConfig = LoadSensorConfig("config/sensors.yaml", &sensorCount, &configSensors); 
+  if (!validConfig) return 1;
   //Initialize queue seeded with the config values
   sensorQeue sq;
   initSensorQeue(&sq);

@@ -2,6 +2,7 @@
 #define CONFIG_H
 
 #include <stddef.h>
+#include <stdbool.h>
 #include "../sensor/sensor.h"
 
 typedef enum {
@@ -9,6 +10,5 @@ typedef enum {
   CONFIG_ERROR
 } configStatus;
 
-sensorData* fileToSensors(char* fileName, size_t* count);
-
+bool LoadSensorConfig(const char* fileName, size_t* count, sensorData **dt);
 #endif

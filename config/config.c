@@ -1,4 +1,5 @@
 #include "config.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,7 +30,7 @@ static configStatus readConfigFile(const char* fileName, char** buf_out) {
   return CONFIG_OK;
 }
 
-sensorData* fileToSensors(char* fileName, size_t* count) {
+static sensorData* fileToSensors(const char* fileName, size_t* count) {
   char* contents;
   
   if (readConfigFile(fileName, &contents) != CONFIG_OK) {
@@ -72,4 +73,11 @@ while (*count < MAX_SENSORS &&
   }
   
   return sensors;
+}
+
+bool LoadSensorConfig(const char *fileName, size_t *count, sensorData **out) {
+  sensorData *dt = fileToSensors(fileName, count);
+  if (dt == NULL) return false;
+  *out = dt;
+  return true;
 }
