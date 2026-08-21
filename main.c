@@ -10,17 +10,14 @@
 
 typedef struct {
   sensorQeue *sq;
-  int sensorId;
+  sensorData data;
 } taskArgs;
 
 static void mockSensorTask(void *ctx) {
   taskArgs *args = ctx;
 
-  sensorData d;
-  initSensorData(&d);
-  d.sensorId = args->sensorId;
-  sensorDataUpdate(&d);
-  addElemToQueue(args->sq, d);
+  sensorDataUpdate(&args->data, (float)GetTime());
+  addElemToQueue(args->sq, args->data);
 }
 
 static int displayBlockHeightCalc(int screenHeight, int amountOfSensors) {
@@ -61,14 +58,15 @@ int main(void) {
   sensorQeue sq;
   initSensorQeue(&sq);
   for (size_t i = 0; i < sensorCount; i++) {
+    configSensors[i].initialFuelLevel = configSensors[i].fuelLevel;
     addElemToQueue(&sq, configSensors[i]);
   }
 
-  //One task per sensor
+  //One task per sensor, each owning its persistent simulated state
   taskArgs* args = malloc(sensorCount * sizeof(taskArgs));
   Task* tasks = malloc(sensorCount * sizeof(Task));
   for (size_t i = 0; i < sensorCount; i++) {
-    args[i] = (taskArgs){ .sq = &sq, .sensorId = configSensors[i].sensorId };
+    args[i] = (taskArgs){ .sq = &sq, .data = configSensors[i] };
     initTask(&tasks[i], 3, mockSensorTask, &args[i], time(NULL));
   }
 

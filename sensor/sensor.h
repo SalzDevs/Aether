@@ -13,6 +13,7 @@ typedef struct {
   float altitude;
   int engineTemperature;
   int fuelLevel;
+  int initialFuelLevel;
   int batteryVoltage;
 } sensorData;
 
@@ -24,6 +25,6 @@ void printSensorData(sensorData d);
 
 int sensorDataToString(sensorData d, char* buf, size_t bufSize);
 
-void sensorDataUpdate(sensorData* d);
+void sensorDataUpdate(sensorData* d, float time_s);
 
 #endif

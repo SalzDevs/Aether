@@ -12,6 +12,7 @@ void initSensorData(sensorData* d) {
   d->altitude = 0.0;
   d->engineTemperature = 0;
   d->fuelLevel = 0;
+  d->initialFuelLevel = 0;
   d->batteryVoltage = 0;
 }
 
@@ -28,11 +29,17 @@ int sensorDataToString(sensorData d, char* buf, size_t bufSize) {
   return snprintf(buf, bufSize, "Sensor %d | Air Speed:%f Altitude:%f Engine Temp:%d Fuel:%d Battery:%d\n",
     d.sensorId, d.airSpeed, d.altitude, d.engineTemperature, d.fuelLevel, d.batteryVoltage);
 }
+#define FUEL_BURN_RATE 1
 
-void sensorDataUpdate(sensorData* d) {
+static int updateFuelLevel(int initialFuelLevel, int burnRate, float time_s) {
+  int remaining_fuel = initialFuelLevel - (int)(burnRate * time_s);
+  return remaining_fuel > 0 ? remaining_fuel : 0;
+}
+
+void sensorDataUpdate(sensorData* d, float time_s) {
   d->airSpeed = rand();
   d->altitude = rand();
   d->engineTemperature = rand();
-  d->fuelLevel = rand();
+  d->fuelLevel = updateFuelLevel(d->initialFuelLevel, FUEL_BURN_RATE, time_s);
   d->batteryVoltage = rand();
 }
