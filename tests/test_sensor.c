@@ -20,6 +20,8 @@ static void sensor_data_init_test() {
   assert(d.fuelLevel == 0);
   assert(d.initialFuelLevel == 0);
   assert(d.batteryVoltage == 0);
+  assert(d.engineTemp == 0.0f);
+  assert(d.lastUpdate_s == 0.0f);
 }
 
 static void test_update_fields_in_range(void) {
@@ -90,6 +92,58 @@ static void test_to_string_contains_sensor_id(void) {
   assert(strstr(buf, "Sensor 7") != NULL);
 }
 
+// Thermal model constants mirrored from sensor.c
+#define AMBIENT_TEMP_C   25.0f
+#define HEAT_GENERATED_W 1500.0f
+#define ENGINE_MASS_KG   120.0f
+#define SPECIFIC_HEAT    450.0f
+#define COOLING_RATE     0.02f
+
+static float expectedEquilibriumTemp(void) {
+  return AMBIENT_TEMP_C +
+         HEAT_GENERATED_W / (COOLING_RATE * ENGINE_MASS_KG * SPECIFIC_HEAT);
+}
+
+static void test_engine_temp_cools_when_above_equilibrium(void) {
+  sensorData d;
+  initSensorData(&d);
+  d.engineTemp = 85.0f; // config starting temperature
+
+  sensorDataUpdate(&d, 3.0f);
+  assert(d.engineTemperature < 85);
+  assert(d.engineTemperature >= (int)expectedEquilibriumTemp());
+}
+
+static void test_engine_temp_heats_when_below_equilibrium(void) {
+  sensorData d;
+  initSensorData(&d);
+  d.engineTemp = AMBIENT_TEMP_C;
+
+  float before = d.engineTemperature;
+  sensorDataUpdate(&d, 10.0f);
+  assert((float)d.engineTemperature > before);
+}
+
+static void test_engine_temp_never_negative(void) {
+  sensorData d;
+  initSensorData(&d);
+  d.engineTemp = -50.0f;
+
+  sensorDataUpdate(&d, 100.0f);
+  assert(d.engineTemperature >= 0);
+}
+
+static void test_engine_temp_zero_time_step_is_noop(void) {
+  sensorData d;
+  initSensorData(&d);
+  d.engineTemp = 85.0f;
+
+  sensorDataUpdate(&d, 5.0f);
+  int temp = d.engineTemperature;
+  sensorDataUpdate(&d, 5.0f); // same timestamp -> dt = 0 -> unchanged
+  assert(d.engineTemperature == temp);
+}
+
 int main() {
   sensor_init_test();
   sensor_data_init_test();
@@ -99,6 +153,10 @@ int main() {
   test_fuel_depletes_over_time();
   test_fuel_never_goes_negative();
   test_to_string_contains_sensor_id();
+  test_engine_temp_cools_when_above_equilibrium();
+  test_engine_temp_heats_when_below_equilibrium();
+  test_engine_temp_never_negative();
+  test_engine_temp_zero_time_step_is_noop();
   printf("All sensor tests passed\n");
   return 0;
 }

@@ -15,6 +15,9 @@ typedef struct {
   int fuelLevel;
   int initialFuelLevel;
   int batteryVoltage;
+  // simulation state
+  float engineTemp;    // current simulated engine temperature in Celsius (float state)
+  float lastUpdate_s;  // timestamp of the last sensorDataUpdate call
 } sensorData;
 
 void initSensor(sensor* s, int id);
