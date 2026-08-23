@@ -1,6 +1,10 @@
 #include "sensor.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+// Simulation constants (will become per-metric strategy parameters)
+#define FUEL_BURN_RATE 1
 
 // Engine thermal model constants (ported from main.py prototype)
 #define AMBIENT_TEMP_C   25.0f  // ambient temperature in Celsius
@@ -14,41 +18,61 @@ void initSensor(sensor* s, int id) {
 }
 
 void initSensorData(sensorData* d) {
-  d->sensorId = 0;
-  d->airSpeed = 0.0;
-  d->altitude = 0.0;
-  d->engineTemperature = 0;
-  d->fuelLevel = 0;
-  d->initialFuelLevel = 0;
-  d->batteryVoltage = 0;
-  d->engineTemp = 0.0f;
-  d->lastUpdate_s = 0.0f;
+  memset(d, 0, sizeof(*d));
+}
+
+bool addMetric(sensorData* d, const char* name, const char* unit, float value) {
+  if (d == NULL || name == NULL || name[0] == '\0') return false;
+  if (d->metricCount >= MAX_METRICS) return false;
+
+  Metric* m = &d->metrics[d->metricCount];
+  snprintf(m->name, sizeof(m->name), "%s", name);
+  snprintf(m->unit, sizeof(m->unit), "%s", unit != NULL ? unit : "");
+  m->value = value;
+  m->initialValue = value;
+  d->metricCount++;
+  return true;
+}
+
+Metric* findMetric(sensorData* d, const char* name) {
+  if (d == NULL || name == NULL) return NULL;
+  for (size_t i = 0; i < d->metricCount; i++) {
+    if (strcmp(d->metrics[i].name, name) == 0) return &d->metrics[i];
+  }
+  return NULL;
 }
 
 void printSensorData(sensorData d) {
-  printf("Sensor Id:%d\n", d.sensorId);
-  printf("Air Speed:%f\n", d.airSpeed);
-  printf("Altitude:%f\n", d.altitude);
-  printf("Engine Temperature:%d\n", d.engineTemperature);
-  printf("Fuel Level:%d\n", d.fuelLevel);
-  printf("Battery Voltage:%d\n", d.batteryVoltage);
+  printf("Sensor Id:%d Name:%s\n", d.id, d.name);
+  for (size_t i = 0; i < d.metricCount; i++) {
+    Metric* m = &d.metrics[i];
+    printf("  %s (%s): %g\n", m->name, m->unit, m->value);
+  }
 }
 
 int sensorDataToString(sensorData d, char* buf, size_t bufSize) {
-  return snprintf(buf, bufSize, "Sensor %d | Air Speed:%f Altitude:%f Engine Temp:%d Fuel:%d Battery:%d\n",
-    d.sensorId, d.airSpeed, d.altitude, d.engineTemperature, d.fuelLevel, d.batteryVoltage);
-}
-#define FUEL_BURN_RATE 1
+  if (buf == NULL || bufSize == 0) return 0;
 
-static int updateFuelLevel(int initialFuelLevel, int burnRate, float time_s) {
-  int remaining_fuel = initialFuelLevel - (int)(burnRate * time_s);
-  return remaining_fuel > 0 ? remaining_fuel : 0;
+  size_t used = (size_t)snprintf(buf, bufSize, "Sensor %d |", d.id);
+
+  for (size_t i = 0; i < d.metricCount && used < bufSize - 1; i++) {
+    Metric* m = &d.metrics[i];
+    used += (size_t)snprintf(buf + used, bufSize - used, " %s(%s):%g",
+                             m->name, m->unit, m->value);
+  }
+
+  return (int)used;
+}
+
+static float updateFuelLevel(float initialFuelLevel, int burnRate, float time_s) {
+  float remaining_fuel = initialFuelLevel - (float)(burnRate * time_s);
+  return remaining_fuel > 0.0f ? remaining_fuel : 0.0f;
 }
 
 // One explicit Euler step of the engine thermal model:
 //   dT/dt = -coolingRate * (T - ambient) + heatGenerated / (mass * specificHeat)
 // Returns the temperature clamped at 0 C.
-static float updateEngineTemp(float currentTemp, float timeStep) {
+static float calcEngineTemp(float currentTemp, float timeStep) {
   float heatLoss = -COOLING_RATE * (currentTemp - AMBIENT_TEMP_C);
   float heatGain = HEAT_GENERATED_W / (ENGINE_MASS_KG * SPECIFIC_HEAT);
   float dTdt = heatLoss + heatGain;
@@ -58,15 +82,23 @@ static float updateEngineTemp(float currentTemp, float timeStep) {
 }
 
 void sensorDataUpdate(sensorData* d, float time_s) {
-  // Integrate over the elapsed time since the previous update
+  // Elapsed time since the previous update
   float timeStep = time_s - d->lastUpdate_s;
   if (timeStep < 0.0f) timeStep = 0.0f;
   d->lastUpdate_s = time_s;
 
-  d->airSpeed = rand();
-  d->altitude = rand();
-  d->engineTemp = updateEngineTemp(d->engineTemp, timeStep);
-  d->engineTemperature = (int)(d->engineTemp + 0.5f);
-  d->fuelLevel = updateFuelLevel(d->initialFuelLevel, FUEL_BURN_RATE, time_s);
-  d->batteryVoltage = rand();
+  Metric* m;
+
+  if ((m = findMetric(d, "airSpeed")) != NULL) m->value = (float)rand();
+  if ((m = findMetric(d, "altitude")) != NULL) m->value = (float)rand();
+
+  if ((m = findMetric(d, "engineTemperature")) != NULL) {
+    m->value = calcEngineTemp(m->value, timeStep);
+  }
+
+  if ((m = findMetric(d, "fuelLevel")) != NULL) {
+    m->value = updateFuelLevel(m->initialValue, FUEL_BURN_RATE, time_s);
+  }
+
+  if ((m = findMetric(d, "batteryVoltage")) != NULL) m->value = (float)rand();
 }

@@ -58,8 +58,6 @@ int main(void) {
   sensorQeue sq;
   initSensorQeue(&sq);
   for (size_t i = 0; i < sensorCount; i++) {
-    configSensors[i].initialFuelLevel = configSensors[i].fuelLevel;
-    configSensors[i].engineTemp = (float)configSensors[i].engineTemperature;
     addElemToQueue(&sq, configSensors[i]);
   }
 
@@ -74,7 +72,7 @@ int main(void) {
   free(configSensors);
 
   int displayBlockHeight = displayBlockHeightCalc(screenHeight, sq.current_size);
-  char buf[128];
+  char buf[256];
 
   int textWidth;
   while (!WindowShouldClose()) {

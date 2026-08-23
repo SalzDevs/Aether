@@ -49,7 +49,7 @@ static sensorQeue make_queue_with_sensors(size_t count) {
   for (size_t i = 1; i <= count; i++) {
     sensorData d;
     initSensorData(&d);
-    d.sensorId = (int)i;
+    d.id = (int)i;
     addElemToQueue(&sq, d);
   }
   return sq;
@@ -65,7 +65,7 @@ static void test_run_task_executes_and_removes_front_when_period_elapsed(void) {
 
   assert(dummy_calls == 1);
   assert(sq.current_size == 1);
-  assert(sq.data[0].sensorId == 2);
+  assert(sq.data[0].id == 2);
 }
 
 static void test_run_task_does_nothing_before_period(void) {

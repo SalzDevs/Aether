@@ -1,7 +1,16 @@
 #include "../config/config.h"
+#include "../sensor/sensor.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+// Returns a metric's value, failing the test if the metric is missing.
+static float value_of(sensorData* s, const char* name) {
+  Metric* m = findMetric(s, name);
+  assert(m != NULL);
+  return m->value;
+}
 
 static void test_file_to_sensors(void) {
   size_t count = 0;
@@ -12,22 +21,33 @@ static void test_file_to_sensors(void) {
   assert(sensors != NULL);
   assert(count == 5);
 
-  assert(sensors[0].sensorId == 1);
-  assert(sensors[0].airSpeed == 120.5f);
-  assert(sensors[0].altitude == 1000.0f);
-  assert(sensors[0].engineTemperature == 85);
-  assert(sensors[0].fuelLevel == 60);
-  assert(sensors[0].batteryVoltage == 12);
+  assert(sensors[0].id == 1);
+  assert(value_of(&sensors[0], "airSpeed") == 120.5f);
+  assert(value_of(&sensors[0], "altitude") == 1000.0f);
+  assert(value_of(&sensors[0], "engineTemperature") == 85.0f);
+  assert(value_of(&sensors[0], "fuelLevel") == 60.0f);
+  assert(value_of(&sensors[0], "batteryVoltage") == 12.0f);
 
-  assert(sensors[3].sensorId == 4);
-  assert(sensors[3].fuelLevel == 42);
+  // Metrics carry units and remember their initial value
+  Metric* fuel = findMetric(&sensors[0], "fuelLevel");
+  assert(strcmp(fuel->unit, "%") == 0);
+  assert(fuel->initialValue == 60.0f);
+  Metric* temp = findMetric(&sensors[0], "engineTemperature");
+  assert(strcmp(temp->unit, "C") == 0);
 
-  assert(sensors[4].sensorId == 5);
-  assert(sensors[4].airSpeed == 115.8f);
-  assert(sensors[4].altitude == 1100.0f);
-  assert(sensors[4].engineTemperature == 87);
-  assert(sensors[4].fuelLevel == 42);
-  assert(sensors[4].batteryVoltage == 12);
+  // Sensor names are parsed too
+  assert(strcmp(sensors[0].name, "airspeed_sensor") == 0);
+  assert(strcmp(sensors[2].name, "engine_sensor") == 0);
+
+  assert(sensors[3].id == 4);
+  assert(value_of(&sensors[3], "fuelLevel") == 42.0f);
+
+  assert(sensors[4].id == 5);
+  assert(value_of(&sensors[4], "airSpeed") == 115.8f);
+  assert(value_of(&sensors[4], "altitude") == 1100.0f);
+  assert(value_of(&sensors[4], "engineTemperature") == 87.0f);
+  assert(value_of(&sensors[4], "fuelLevel") == 42.0f);
+  assert(value_of(&sensors[4], "batteryVoltage") == 12.0f);
 
   free(sensors);
 }

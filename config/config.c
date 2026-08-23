@@ -46,21 +46,37 @@ static sensorData* fileToSensors(const char* fileName, size_t* count) {
   char* nl = strchr(p, '\n');
   if (nl != NULL) p = nl + 1;
 
+  char name[SENSOR_NAME_MAX];
+  int id;
+  float airSpeed, altitude, engineTemperature, fuelLevel, batteryVoltage;
   int consumed;
-while (*count < MAX_SENSORS &&
-       sscanf(
-           p,
-           " - id: %d name: %*s data: "
-           "airSpeed: %f altitude: %f engineTemperature: %d "
-           "fuelLevel: %d batteryVoltage: %d%n",
-           &sensors[*count].sensorId,
-           &sensors[*count].airSpeed,
-           &sensors[*count].altitude,
-           &sensors[*count].engineTemperature,
-           &sensors[*count].fuelLevel,
-           &sensors[*count].batteryVoltage,
-           &consumed
-       ) == 6) {
+
+  while (*count < MAX_SENSORS &&
+      sscanf(
+          p,
+          " - id: %d name: %31s data: "
+          "airSpeed: %f altitude: %f engineTemperature: %f "
+          "fuelLevel: %f batteryVoltage: %f%n",
+          &id,
+          name,
+          &airSpeed,
+          &altitude,
+          &engineTemperature,
+          &fuelLevel,
+          &batteryVoltage,
+          &consumed
+      ) == 7) {
+    sensorData* s = &sensors[*count];
+    initSensorData(s);
+    s->id = id;
+    snprintf(s->name, sizeof(s->name), "%s", name);
+
+    addMetric(s, "airSpeed", "m/s", airSpeed);
+    addMetric(s, "altitude", "m", altitude);
+    addMetric(s, "engineTemperature", "C", engineTemperature);
+    addMetric(s, "fuelLevel", "%", fuelLevel);
+    addMetric(s, "batteryVoltage", "V", batteryVoltage);
+
     (*count)++;
     p += consumed;
   }
