@@ -1,5 +1,6 @@
 #include "scheduler.h"
 #include "../Queue/queue.h"
+#include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -12,7 +13,7 @@ void initTask(Task* t, uint32_t period, void (*function)(void*), void *ctx, uint
 
 void printTask(Task task) {
   printf("Task Period:%u\n", task.period);
-  printf("Task Last Run:%llu\n", task.last_run);
+  printf("Task Last Run:%" PRIu64 "\n", task.last_run);
 }
 
 void runTask(Task* t, sensorQueue* sq) {

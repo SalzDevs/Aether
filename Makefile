@@ -17,7 +17,8 @@ YAML_CFLAGS = $(shell pkg-config --cflags yaml-0.1)
 YAML_LIBS = $(shell pkg-config --libs yaml-0.1)
 
 # Module sources linked into every test binary
-MODULE_SRCS = Queue/queue.c sensor/sensor.c scheduler/scheduler.c config/config.c ui/dashboard.c
+# (ui/ is excluded: only the main binary needs Raylib)
+MODULE_SRCS = Queue/queue.c sensor/sensor.c scheduler/scheduler.c config/config.c
 
 # Auto-discover tests:
 # Every file named tests/test_*.c becomes its own executable.
@@ -69,7 +70,7 @@ test: $(TEST_BINS)
 # Each test file compiles into its own binary
 # tests/test_foo.c -> test_foo
 test_%: tests/test_%.c $(MODULE_SRCS)
-	$(CC) $(CFLAGS) $(RAYLIB_CFLAGS) $(YAML_CFLAGS) -I. $< $(MODULE_SRCS) -o $@ $(RAYLIB_LIBS) $(YAML_LIBS)
+	$(CC) $(CFLAGS) $(YAML_CFLAGS) -I. $< $(MODULE_SRCS) -o $@ $(YAML_LIBS)
 
 
 # -------------------------
