@@ -4,16 +4,12 @@
 #include <stdio.h>
 #include <string.h>
 
-// Builds a sensor carrying the five legacy metrics so simulation
-// behavior can be tested by name.
+// Builds a sensor with a few generic metrics for simulation tests.
 static sensorData make_default_sensor(void) {
   sensorData d;
   initSensorData(&d);
-  addMetric(&d, "airSpeed", "m/s", 120.5f);
-  addMetric(&d, "altitude", "m", 1000.0f);
-  addMetric(&d, "engineTemperature", "C", 85.0f);
-  addMetric(&d, "fuelLevel", "%", 100.0f);
-  addMetric(&d, "batteryVoltage", "V", 12.0f);
+  addMetric(&d, "temperature", "C", 20.0f);
+  addMetric(&d, "humidity", "%", 50.0f);
   return d;
 }
 
@@ -35,15 +31,15 @@ static void test_add_metric_stores_name_unit_and_value(void) {
   sensorData d;
   initSensorData(&d);
 
-  assert(addMetric(&d, "fuelLevel", "%", 60.0f));
+  assert(addMetric(&d, "temperature", "C", 22.5f));
   assert(d.metricCount == 1);
 
-  Metric* m = findMetric(&d, "fuelLevel");
+  Metric* m = findMetric(&d, "temperature");
   assert(m != NULL);
-  assert(strcmp(m->name, "fuelLevel") == 0);
-  assert(strcmp(m->unit, "%") == 0);
-  assert(m->value == 60.0f);
-  assert(m->initialValue == 60.0f);
+  assert(strcmp(m->name, "temperature") == 0);
+  assert(strcmp(m->unit, "C") == 0);
+  assert(m->value == 22.5f);
+  assert(m->initialValue == 22.5f);
 }
 
 static void test_add_metric_rejects_full_sensor(void) {
@@ -75,28 +71,15 @@ static void test_find_metric_missing_returns_null(void) {
   assert(findMetric(&d, "b") == NULL);
 }
 
-static void test_update_fields_in_range(void) {
+static void test_update_changes_values(void) {
   sensorData d = make_default_sensor();
 
+  srand(42);
   sensorDataUpdate(&d, 0.0f);
+  float temp1 = findMetric(&d, "temperature")->value;
 
-  Metric* m;
-  assert((m = findMetric(&d, "airSpeed")) != NULL);
-  assert(m->value >= 0 && m->value <= (float)RAND_MAX);
-  assert((m = findMetric(&d, "altitude")) != NULL);
-  assert(m->value >= 0 && m->value <= (float)RAND_MAX);
-  assert((m = findMetric(&d, "batteryVoltage")) != NULL);
-  assert(m->value >= 0 && m->value <= (float)RAND_MAX);
-  assert((m = findMetric(&d, "fuelLevel")) != NULL);
-  assert(m->value >= 0 && m->value <= (float)RAND_MAX);
-}
-
-static void test_consecutive_updates_differ(void) {
-  sensorData d = make_default_sensor();
-  sensorDataUpdate(&d, 0.0f);
-  float speed1 = findMetric(&d, "airSpeed")->value;
-  sensorDataUpdate(&d, 0.0f);
-  assert(findMetric(&d, "airSpeed")->value != speed1);
+  sensorDataUpdate(&d, 1.0f);
+  assert(findMetric(&d, "temperature")->value != temp1);
 }
 
 static void test_update_is_deterministic_with_seed(void) {
@@ -114,67 +97,39 @@ static void test_update_is_deterministic_with_seed(void) {
   }
 }
 
-static void test_fuel_depletes_over_time(void) {
-  sensorData d = make_default_sensor(); // fuel initialValue = 100
+static void test_update_stays_near_initial_value(void) {
+  // A single walk step moves a metric by at most RANDOM_WALK_FRACTION
+  // of its initial value.
+  const float FRACTION = 0.05f;
+  sensorData d = make_default_sensor();
 
+  srand(7);
+  sensorDataUpdate(&d, 0.0f);
+
+  Metric* m = findMetric(&d, "temperature");
+  float maxDelta = 20.0f * FRACTION + 0.001f;
+  assert(m->value > 20.0f - maxDelta && m->value < 20.0f + maxDelta);
+}
+
+static void test_update_never_negative(void) {
+  sensorData d = make_default_sensor();
+
+  srand(1234);
+  for (int i = 0; i < 100; i++) {
+    sensorDataUpdate(&d, (float)i);
+    assert(findMetric(&d, "temperature")->value >= 0.0f);
+    assert(findMetric(&d, "humidity")->value >= 0.0f);
+  }
+}
+
+static void test_zero_initial_value_metric_stays_constant(void) {
+  sensorData d;
+  initSensorData(&d);
+  addMetric(&d, "offset", "", 0.0f);
+
+  srand(99);
   sensorDataUpdate(&d, 10.0f);
-  assert(findMetric(&d, "fuelLevel")->value == 90.0f);
-
-  sensorDataUpdate(&d, 20.0f);
-  assert(findMetric(&d, "fuelLevel")->value == 80.0f);
-}
-
-static void test_fuel_never_goes_negative(void) {
-  sensorData d = make_default_sensor();
-
-  sensorDataUpdate(&d, 1000.0f);
-  assert(findMetric(&d, "fuelLevel")->value == 0.0f);
-}
-
-// Thermal model constants mirrored from sensor.c
-#define AMBIENT_TEMP_C   25.0f
-#define HEAT_GENERATED_W 1500.0f
-#define ENGINE_MASS_KG   120.0f
-#define SPECIFIC_HEAT    450.0f
-#define COOLING_RATE     0.02f
-
-static float expectedEquilibriumTemp(void) {
-  return AMBIENT_TEMP_C +
-         HEAT_GENERATED_W / (COOLING_RATE * ENGINE_MASS_KG * SPECIFIC_HEAT);
-}
-
-static void test_engine_temp_cools_when_above_equilibrium(void) {
-  sensorData d = make_default_sensor(); // engineTemperature starts at 85 C
-
-  sensorDataUpdate(&d, 3.0f);
-  Metric* m = findMetric(&d, "engineTemperature");
-  assert(m->value < 85.0f);
-  assert(m->value >= expectedEquilibriumTemp());
-}
-
-static void test_engine_temp_heats_when_below_equilibrium(void) {
-  sensorData d = make_default_sensor();
-  findMetric(&d, "engineTemperature")->value = AMBIENT_TEMP_C;
-
-  sensorDataUpdate(&d, 10.0f);
-  assert(findMetric(&d, "engineTemperature")->value > AMBIENT_TEMP_C);
-}
-
-static void test_engine_temp_never_negative(void) {
-  sensorData d = make_default_sensor();
-  findMetric(&d, "engineTemperature")->value = -50.0f;
-
-  sensorDataUpdate(&d, 100.0f);
-  assert(findMetric(&d, "engineTemperature")->value >= 0.0f);
-}
-
-static void test_engine_temp_zero_time_step_is_noop(void) {
-  sensorData d = make_default_sensor();
-
-  sensorDataUpdate(&d, 5.0f);
-  float temp = findMetric(&d, "engineTemperature")->value;
-  sensorDataUpdate(&d, 5.0f); // same timestamp -> dt = 0 -> unchanged
-  assert(findMetric(&d, "engineTemperature")->value == temp);
+  assert(findMetric(&d, "offset")->value == 0.0f);
 }
 
 static void test_to_string_contains_sensor_id_and_metrics(void) {
@@ -185,9 +140,8 @@ static void test_to_string_contains_sensor_id_and_metrics(void) {
   sensorDataToString(d, buf, sizeof(buf));
 
   assert(strstr(buf, "Sensor 7") != NULL);
-  assert(strstr(buf, "airSpeed(m/s):120.5") != NULL);
-  assert(strstr(buf, "fuelLevel(%):100") != NULL);
-  assert(strstr(buf, "batteryVoltage(V):12") != NULL);
+  assert(strstr(buf, "temperature(C):20") != NULL);
+  assert(strstr(buf, "humidity(%):50") != NULL);
 }
 
 static void test_to_string_truncates_safely(void) {
@@ -206,15 +160,11 @@ int main() {
   test_add_metric_rejects_full_sensor();
   test_add_metric_rejects_empty_name();
   test_find_metric_missing_returns_null();
-  test_update_fields_in_range();
-  test_consecutive_updates_differ();
+  test_update_changes_values();
   test_update_is_deterministic_with_seed();
-  test_fuel_depletes_over_time();
-  test_fuel_never_goes_negative();
-  test_engine_temp_cools_when_above_equilibrium();
-  test_engine_temp_heats_when_below_equilibrium();
-  test_engine_temp_never_negative();
-  test_engine_temp_zero_time_step_is_noop();
+  test_update_stays_near_initial_value();
+  test_update_never_negative();
+  test_zero_initial_value_metric_stays_constant();
   test_to_string_contains_sensor_id_and_metrics();
   test_to_string_truncates_safely();
   printf("All sensor tests passed\n");

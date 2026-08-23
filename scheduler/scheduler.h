@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include "../sensor/sensor.h"
-#include "../Qeue/qeue.h"
+#include "../Queue/queue.h"
 
 typedef struct {
   //period of running the task
@@ -29,6 +29,6 @@ void printTask(Task task);
 bool shouldRunTask(uint32_t period, uint64_t last_run, uint64_t current_time);
 
 // Runs the task if the period as passed
-void runTask(Task* t, sensorQeue* sq); 
+void runTask(Task* t, sensorQueue* sq); 
 
 #endif

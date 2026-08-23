@@ -3,17 +3,15 @@
   <img src="logo.png" width="180" alt="logo">
 </p>
 
-Aether is a small C application that simulates sensor telemetry and displays it in a real-time Raylib dashboard.
-
-It loads initial sensor values from a YAML configuration file, updates simulated data on a schedule, and renders the current readings in a graphical window.
+Aether is a small C application that simulates sensor readings and displays them in a real-time Raylib dashboard.
 
 ## Features
 
 - Load sensor data from YAML configuration
-- Simulate changing telemetry values
+- Simulate changing sensor values
 - Schedule periodic sensor updates
 - Store readings in a FIFO queue
-- Display telemetry with Raylib
+- Display sensor values with Raylib
 - Run unit tests for configuration, queue, scheduler, and sensor modules
 
 ## Requirements
@@ -88,14 +86,14 @@ Example:
 ```yaml
 sensors:
   - id: 1
-    name: airspeed_sensor
+    name: temperature_sensor
     metrics:
-      - name: airSpeed
-        unit: m/s
-        value: 120.5
-      - name: fuelLevel
+      - name: temperature
+        unit: C
+        value: 22.5
+      - name: humidity
         unit: "%"
-        value: 60
+        value: 45
 ```
 
 Each sensor requires:
@@ -114,7 +112,7 @@ Note: a `%` unit must be quoted (`"%"`) because libyaml reserves the percent sig
 ```text
 .
 ├── config/       Sensor configuration loading and YAML data
-├── Qeue/         FIFO sensor-data queue
+├── Queue/        FIFO sensor-data queue
 ├── scheduler/    Periodic task scheduling
 ├── sensor/       Sensor data types and simulation
 ├── tests/        Unit tests
@@ -134,7 +132,7 @@ configuration parser
 sensor data queue ◄── scheduled sensor tasks
      │
      ▼
-Raylib telemetry dashboard
+Raylib sensor dashboard
 ```
 
 ## License

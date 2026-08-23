@@ -1,95 +1,44 @@
 sensors:
   - id: 1
-    name: airspeed_sensor
+    name: temperature_sensor
     metrics:
-      - name: airSpeed
-        unit: m/s
-        value: 120.5
-      - name: altitude
-        unit: m
-        value: 1000.0
-      - name: engineTemperature
+      - name: temperature
         unit: C
-        value: 85
-      - name: fuelLevel
+        value: 22.5
+      - name: humidity
         unit: "%"
-        value: 60
-      - name: batteryVoltage
-        unit: V
-        value: 12
+        value: 45
 
   - id: 2
-    name: altitude_sensor
+    name: pressure_sensor
     metrics:
-      - name: airSpeed
-        unit: m/s
-        value: 110.2
-      - name: altitude
-        unit: m
-        value: 1200.0
-      - name: engineTemperature
-        unit: C
-        value: 90
-      - name: fuelLevel
-        unit: "%"
-        value: 55
-      - name: batteryVoltage
-        unit: V
-        value: 12
+      - name: pressure
+        unit: hPa
+        value: 1013.25
 
   - id: 3
-    name: engine_sensor
+    name: power_sensor
     metrics:
-      - name: airSpeed
-        unit: m/s
-        value: 105.0
-      - name: altitude
-        unit: m
-        value: 980.0
-      - name: engineTemperature
-        unit: C
-        value: 92
-      - name: fuelLevel
-        unit: "%"
-        value: 48
-      - name: batteryVoltage
+      - name: voltage
         unit: V
-        value: 11
+        value: 12.0
+      - name: current
+        unit: A
+        value: 3.5
 
   - id: 4
-    name: fuel_sensor
+    name: flow_sensor
     metrics:
-      - name: airSpeed
-        unit: m/s
-        value: 115.8
-      - name: altitude
-        unit: m
-        value: 1100.0
-      - name: engineTemperature
-        unit: C
-        value: 87
-      - name: fuelLevel
-        unit: "%"
-        value: 42
-      - name: batteryVoltage
-        unit: V
-        value: 12
+      - name: flowRate
+        unit: L/min
+        value: 8.2
 
   - id: 5
-    name: battery_sensor
+    name: vibration_sensor
     metrics:
-      - name: airSpeed
-        unit: m/s
-        value: 115.8
-      - name: altitude
-        unit: m
-        value: 1100.0
-      - name: engineTemperature
-        unit: C
-        value: 87
-      - name: fuelLevel
-        unit: "%"
-        value: 42
-      - name: batteryVoltage
-        unit: V
-        value: 12
+      - name: acceleration
+        unit: m/s2
+        value: 9.81
+      - name: frequency
+        unit: Hz
+        value: 50

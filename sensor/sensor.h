@@ -14,7 +14,7 @@ typedef struct {
   int id;
 } sensor;
 
-// A single named measurement of a sensor, e.g. ("fuel", "%", 42).
+// A single named measurement of a sensor, e.g. ("temperature", "C", 22.5).
 typedef struct {
   char name[METRIC_NAME_MAX];
   char unit[METRIC_UNIT_MAX];

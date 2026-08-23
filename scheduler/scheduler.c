@@ -1,5 +1,5 @@
 #include "scheduler.h"
-#include "../Qeue/qeue.h"
+#include "../Queue/queue.h"
 #include <stdint.h>
 #include <stdio.h>
 
@@ -15,7 +15,7 @@ void printTask(Task task) {
   printf("Task Last Run:%llu\n", task.last_run);
 }
 
-void runTask(Task* t, sensorQeue* sq) {
+void runTask(Task* t, sensorQueue* sq) {
   if (t == NULL || sq == NULL || t->function == NULL) {
     return;
   }
@@ -25,7 +25,7 @@ void runTask(Task* t, sensorQeue* sq) {
   if (shouldRunTask(t->period, t->last_run, currentTime)) {
     t->function(t->ctx);
     t->last_run = currentTime;
-    removeElemFromQeue(sq);
+    removeElemFromQueue(sq);
   }
 }
 

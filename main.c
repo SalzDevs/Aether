@@ -4,12 +4,12 @@
 
 #include "raylib.h"
 #include "sensor/sensor.h"
-#include "Qeue/qeue.h"
+#include "Queue/queue.h"
 #include "scheduler/scheduler.h"
 #include "config/config.h"
 
 typedef struct {
-  sensorQeue *sq;
+  sensorQueue *sq;
   sensorData data;
 } taskArgs;
 
@@ -55,8 +55,8 @@ int main(void) {
   bool validConfig = LoadSensorConfig("config/sensors.yaml", &sensorCount, &configSensors); 
   if (!validConfig) return 1;
   //Initialize queue seeded with the config values
-  sensorQeue sq;
-  initSensorQeue(&sq);
+  sensorQueue sq;
+  initSensorQueue(&sq);
   for (size_t i = 0; i < sensorCount; i++) {
     addElemToQueue(&sq, configSensors[i]);
   }
@@ -104,12 +104,12 @@ int main(void) {
       runTask(&tasks[i], &sq);
     }
 
-    printQeue(&sq);
+    printQueue(&sq);
     displayBlockHeight = displayBlockHeightCalc(screenHeight, sq.current_size);
   }
 
   free(args);
   free(tasks);
-  destroySensorQeue(&sq);
+  destroySensorQueue(&sq);
   return 0;
 }

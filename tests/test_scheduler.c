@@ -43,9 +43,9 @@ static void test_wrap_around_still_runs(void) {
   assert(shouldRunTask(30, 1000, 10));
 }
 
-static sensorQeue make_queue_with_sensors(size_t count) {
-  sensorQeue sq;
-  initSensorQeue(&sq);
+static sensorQueue make_queue_with_sensors(size_t count) {
+  sensorQueue sq;
+  initSensorQueue(&sq);
   for (size_t i = 1; i <= count; i++) {
     sensorData d;
     initSensorData(&d);
@@ -56,7 +56,7 @@ static sensorQeue make_queue_with_sensors(size_t count) {
 }
 
 static void test_run_task_executes_and_removes_front_when_period_elapsed(void) {
-  sensorQeue sq = make_queue_with_sensors(2);
+  sensorQueue sq = make_queue_with_sensors(2);
 
   Task t;
   initTask(&t, 3, dummy_function, NULL, (uint64_t)time(NULL) - 3);
@@ -69,7 +69,7 @@ static void test_run_task_executes_and_removes_front_when_period_elapsed(void) {
 }
 
 static void test_run_task_does_nothing_before_period(void) {
-  sensorQeue sq = make_queue_with_sensors(2);
+  sensorQueue sq = make_queue_with_sensors(2);
 
   Task t;
   initTask(&t, 3, dummy_function, NULL, (uint64_t)time(NULL));
@@ -81,8 +81,8 @@ static void test_run_task_does_nothing_before_period(void) {
 }
 
 static void test_run_task_on_empty_queue_does_not_crash(void) {
-  sensorQeue sq;
-  initSensorQeue(&sq);
+  sensorQueue sq;
+  initSensorQueue(&sq);
 
   Task t;
   initTask(&t, 0, dummy_function, NULL, (uint64_t)time(NULL));
