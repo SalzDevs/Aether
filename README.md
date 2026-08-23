@@ -111,13 +111,14 @@ Note: a `%` unit must be quoted (`"%"`) because libyaml reserves the percent sig
 
 ```text
 .
+├── assets/fonts/ Bundled font (JetBrains Mono, SIL OFL)
 ├── config/       Sensor configuration loading and YAML data
 ├── Queue/        FIFO sensor-data queue
 ├── scheduler/    Periodic task scheduling
 ├── sensor/       Sensor data types and simulation
-├── ui/           Dashboard rendering (Raylib)
+├── ui/           Dashboard rendering, theme tokens (Raylib)
 ├── tests/        Unit tests
-├── main.c        Application entry point and Raylib dashboard
+├── main.c        Application entry point
 └── Makefile      Build and test commands
 ```
 

@@ -27,6 +27,7 @@ int main(void) {
 
   InitWindow(screenWidth, screenHeight, "Aether");
   SetTargetFPS(60);
+  InitDashboard();
 
   srand(time(NULL));
 
@@ -66,5 +67,7 @@ int main(void) {
   free(args);
   free(tasks);
   destroySensorQueue(&sq);
+  UnloadDashboard();
+  CloseWindow();
   return 0;
 }
