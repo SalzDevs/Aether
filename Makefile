@@ -6,7 +6,7 @@ CFLAGS = -Wall -Wextra -std=c99
 TARGET = main
 
 # Object files
-OBJS = main.o sensor/sensor.o scheduler/scheduler.o Queue/queue.o config/config.o
+OBJS = main.o sensor/sensor.o scheduler/scheduler.o Queue/queue.o config/config.o ui/dashboard.o
 
 # Raylib flags (installed via Homebrew)
 RAYLIB_CFLAGS = $(shell pkg-config --cflags raylib)
@@ -17,7 +17,7 @@ YAML_CFLAGS = $(shell pkg-config --cflags yaml-0.1)
 YAML_LIBS = $(shell pkg-config --libs yaml-0.1)
 
 # Module sources linked into every test binary
-MODULE_SRCS = Queue/queue.c sensor/sensor.c scheduler/scheduler.c config/config.c
+MODULE_SRCS = Queue/queue.c sensor/sensor.c scheduler/scheduler.c config/config.c ui/dashboard.c
 
 # Auto-discover tests:
 # Every file named tests/test_*.c becomes its own executable.

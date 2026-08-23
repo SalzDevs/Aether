@@ -115,6 +115,7 @@ Note: a `%` unit must be quoted (`"%"`) because libyaml reserves the percent sig
 ├── Queue/        FIFO sensor-data queue
 ├── scheduler/    Periodic task scheduling
 ├── sensor/       Sensor data types and simulation
+├── ui/           Dashboard rendering (Raylib)
 ├── tests/        Unit tests
 ├── main.c        Application entry point and Raylib dashboard
 └── Makefile      Build and test commands
