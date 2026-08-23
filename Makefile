@@ -12,6 +12,10 @@ OBJS = main.o sensor/sensor.o scheduler/scheduler.o Qeue/qeue.o config/config.o
 RAYLIB_CFLAGS = $(shell pkg-config --cflags raylib)
 RAYLIB_LIBS = $(shell pkg-config --libs raylib)
 
+# libyaml flags (installed via Homebrew)
+YAML_CFLAGS = $(shell pkg-config --cflags yaml-0.1)
+YAML_LIBS = $(shell pkg-config --libs yaml-0.1)
+
 # Module sources linked into every test binary
 MODULE_SRCS = Qeue/qeue.c sensor/sensor.c scheduler/scheduler.c config/config.c
 
@@ -27,7 +31,7 @@ TEST_BINS = $(patsubst tests/test_%.c,test_%,$(TEST_SRCS))
 
 # Final link step
 $(TARGET): $(OBJS)
-	$(CC) $(OBJS) -o $(TARGET) $(RAYLIB_LIBS)
+	$(CC) $(OBJS) -o $(TARGET) $(RAYLIB_LIBS) $(YAML_LIBS)
 
 
 # -------------------------
@@ -36,7 +40,7 @@ $(TARGET): $(OBJS)
 
 # Compile .c files into .o files
 %.o: %.c
-	$(CC) $(CFLAGS) $(RAYLIB_CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(RAYLIB_CFLAGS) $(YAML_CFLAGS) -c $< -o $@
 
 
 # -------------------------
@@ -65,7 +69,7 @@ test: $(TEST_BINS)
 # Each test file compiles into its own binary
 # tests/test_foo.c -> test_foo
 test_%: tests/test_%.c $(MODULE_SRCS)
-	$(CC) $(CFLAGS) $(RAYLIB_CFLAGS) -I. $< $(MODULE_SRCS) -o $@ $(RAYLIB_LIBS)
+	$(CC) $(CFLAGS) $(RAYLIB_CFLAGS) $(YAML_CFLAGS) -I. $< $(MODULE_SRCS) -o $@ $(RAYLIB_LIBS) $(YAML_LIBS)
 
 
 # -------------------------

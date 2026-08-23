@@ -26,7 +26,7 @@ It loads initial sensor values from a YAML configuration file, updates simulated
 ### macOS
 
 ```sh
-brew install raylib pkg-config
+brew install raylib libyaml pkg-config
 ```
 
 ### Linux
@@ -38,7 +38,7 @@ Install your distribution's development packages for:
 - `pkg-config`
 - Raylib
 
-For example, package names may include `build-essential`, `pkg-config`, and `libraylib-dev`.
+For example, package names may include `build-essential`, `pkg-config`, `libraylib-dev`, and `libyaml-dev`.
 
 ## Build and run
 
@@ -89,12 +89,13 @@ Example:
 sensors:
   - id: 1
     name: airspeed_sensor
-    data:
-      airSpeed: 120.5
-      altitude: 1000.0
-      engineTemperature: 85
-      fuelLevel: 60
-      batteryVoltage: 12
+    metrics:
+      - name: airSpeed
+        unit: m/s
+        value: 120.5
+      - name: fuelLevel
+        unit: "%"
+        value: 60
 ```
 
 Each sensor requires:
@@ -103,11 +104,9 @@ Each sensor requires:
 | --- | --- |
 | `id` | Unique numeric sensor identifier |
 | `name` | Readable sensor name |
-| `airSpeed` | Simulated airspeed value |
-| `altitude` | Simulated altitude value |
-| `engineTemperature` | Simulated engine temperature |
-| `fuelLevel` | Simulated fuel level |
-| `batteryVoltage` | Simulated battery voltage |
+| `metrics` | List of metrics, each with `name`, `unit` and `value` |
+
+Note: a `%` unit must be quoted (`"%"`) because libyaml reserves the percent sign.
 
 
 ## Project structure

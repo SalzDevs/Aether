@@ -1,45 +1,95 @@
 sensors:
   - id: 1
     name: airspeed_sensor
-    data:
-      airSpeed: 120.5
-      altitude: 1000.0
-      engineTemperature: 85
-      fuelLevel: 60
-      batteryVoltage: 12
+    metrics:
+      - name: airSpeed
+        unit: m/s
+        value: 120.5
+      - name: altitude
+        unit: m
+        value: 1000.0
+      - name: engineTemperature
+        unit: C
+        value: 85
+      - name: fuelLevel
+        unit: "%"
+        value: 60
+      - name: batteryVoltage
+        unit: V
+        value: 12
 
   - id: 2
     name: altitude_sensor
-    data:
-      airSpeed: 110.2
-      altitude: 1200.0
-      engineTemperature: 90
-      fuelLevel: 55
-      batteryVoltage: 12
+    metrics:
+      - name: airSpeed
+        unit: m/s
+        value: 110.2
+      - name: altitude
+        unit: m
+        value: 1200.0
+      - name: engineTemperature
+        unit: C
+        value: 90
+      - name: fuelLevel
+        unit: "%"
+        value: 55
+      - name: batteryVoltage
+        unit: V
+        value: 12
 
   - id: 3
     name: engine_sensor
-    data:
-      airSpeed: 105.0
-      altitude: 980.0
-      engineTemperature: 92
-      fuelLevel: 48
-      batteryVoltage: 11
+    metrics:
+      - name: airSpeed
+        unit: m/s
+        value: 105.0
+      - name: altitude
+        unit: m
+        value: 980.0
+      - name: engineTemperature
+        unit: C
+        value: 92
+      - name: fuelLevel
+        unit: "%"
+        value: 48
+      - name: batteryVoltage
+        unit: V
+        value: 11
 
   - id: 4
     name: fuel_sensor
-    data:
-      airSpeed: 115.8
-      altitude: 1100.0
-      engineTemperature: 87
-      fuelLevel: 42
-      batteryVoltage: 12
+    metrics:
+      - name: airSpeed
+        unit: m/s
+        value: 115.8
+      - name: altitude
+        unit: m
+        value: 1100.0
+      - name: engineTemperature
+        unit: C
+        value: 87
+      - name: fuelLevel
+        unit: "%"
+        value: 42
+      - name: batteryVoltage
+        unit: V
+        value: 12
 
   - id: 5
     name: battery_sensor
-    data:
-      airSpeed: 115.8
-      altitude: 1100.0
-      engineTemperature: 87
-      fuelLevel: 42
-      batteryVoltage: 12
+    metrics:
+      - name: airSpeed
+        unit: m/s
+        value: 115.8
+      - name: altitude
+        unit: m
+        value: 1100.0
+      - name: engineTemperature
+        unit: C
+        value: 87
+      - name: fuelLevel
+        unit: "%"
+        value: 42
+      - name: batteryVoltage
+        unit: V
+        value: 12
