@@ -13,6 +13,8 @@ typedef struct {
   Color titleText;  // headers, app title, sensor names
   Color labelText;  // metric names, units, secondary info
   Color valueText;  // metric readings
+  Color upColor;    // indicator: reading increased
+  Color downColor;  // indicator: reading decreased
   Color divider;    // hairlines inside cards
 
   // Spacing
@@ -22,6 +24,10 @@ typedef struct {
 
   // Typography (base atlas size the font is loaded at)
   float fontAtlasSize;
+
+  // Motion
+  float arrowHoldSeconds; // how long up/down indicators stay visible
+  float valueSmoothing;   // how fast displayed values chase actual ones (per second)
 } DashboardTheme;
 
 extern const DashboardTheme THEME;

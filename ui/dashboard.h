@@ -4,9 +4,10 @@
 #include "../sensor/sensor.h"
 #include <stddef.h>
 
-// Loads the dashboard font and other GPU resources.
+// Loads the dashboard font and animation state.
 // Must be called after InitWindow and before DrawDashboard.
-void InitDashboard(void);
+// The registry is used to seed displayed values.
+void InitDashboard(const sensorData* sensors, size_t sensorCount);
 
 // Releases dashboard resources. Call before CloseWindow.
 void UnloadDashboard(void);

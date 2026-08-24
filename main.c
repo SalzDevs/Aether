@@ -29,7 +29,6 @@ int main(void) {
 
   InitWindow(screenWidth, screenHeight, "Aether");
   SetTargetFPS(60);
-  InitDashboard();
 
   srand(time(NULL));
 
@@ -38,6 +37,8 @@ int main(void) {
   size_t sensorCount = 0;
   sensorData* sensors = NULL;
   if (!LoadSensorConfig("config/sensors.yaml", &sensorCount, &sensors)) return 1;
+
+  InitDashboard(sensors, sensorCount);
 
   // One reading history per sensor
   sensorHistory* histories = malloc(sensorCount * sizeof(sensorHistory));
