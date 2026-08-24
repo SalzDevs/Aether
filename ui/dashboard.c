@@ -178,21 +178,24 @@ static int drawSparkline(const sensorHistory* hist, size_t metricIdx,
 static void drawMetricRow(const Metric* m, int x, int y, int w, int h, int index,
                           float displayValue, signed char dir, float dirAlpha,
                           const sensorHistory* hist, size_t metricIdx) {
+  // Each metric is a two-line block: text line on top, sparkline
+  // underneath. The sparkline is earned from leftover block height:
+  // if the card is too dense, the row degrades to text only.
   int rowY = y + index * h;
 
   char valueBuf[32];
   snprintf(valueBuf, sizeof(valueBuf), "%g", roundTo2(displayValue));
   const char* unit = m->unit;
 
-  // Label and value group get separate width budgets so they never collide
-  int contentWidth = w - 2 * THEME.padding;
-  float labelMaxWidth = contentWidth * 42 / 100;
-  float groupMaxWidth = contentWidth * 52 / 100;
-
-  // Sizes: value is the star, label and unit support it
-  float valueSize = (float)imax(11, imin(h - 8, imin(h, w) / 3));
+  // Text sizes: fixed for readability, independent of block height
+  float valueSize = (float)imax(11, imin(20, (h * 2) / 3));
   float labelSize = imax(9.0f, valueSize / 2);
   float unitSize  = imax(8.0f, valueSize / 2 + 1);
+
+  // Label and value group get separate width budgets so they never collide
+  int contentWidth = w - 2 * THEME.padding;
+  float labelMaxWidth = contentWidth * 55 / 100;
+  float groupMaxWidth = contentWidth * 42 / 100;
 
   fitFontSize(m->name, labelMaxWidth, &labelSize, 8);
 
@@ -205,10 +208,6 @@ static void drawMetricRow(const Metric* m, int x, int y, int w, int h, int index
                  measureText(unit, unitSize).x;
   }
 
-  // Label on the left, vertically centered
-  int labelY = rowY + (h - (int)labelSize) / 2;
-  drawText(m->name, x + THEME.padding, labelY, labelSize, THEME.labelText);
-
   // Up/down change indicator: small triangle left of the value
   float arrowSize = valueSize / 3.0f;
   int arrowWidth = 0;
@@ -220,13 +219,23 @@ static void drawMetricRow(const Metric* m, int x, int y, int w, int h, int index
                           (unsigned char)(255 * dirAlpha) };
   }
 
-  // Value + unit on the right, vertically centered as a group
-  int groupX = x + w - THEME.padding - (int)groupWidth;
-  int valueY = rowY + (h - (int)valueSize) / 2;
+  // --- Vertical layout: text line first, sparkline gets the leftover ---
+  int textLineH = (int)valueSize + 6;
+  int sparkH = imin(h - textLineH - 6, 26); // 6px gap, 26px cap
+  bool showSpark = sparkH >= 10;
 
+  int groupH = textLineH + (showSpark ? sparkH + 6 : 0);
+  int groupY = rowY + (h - groupH) / 2;
+
+  // Text line: label left, value + unit right
+  int labelY = groupY + (textLineH - (int)labelSize) / 2;
+  int valueY = groupY + (textLineH - (int)valueSize) / 2;
+  drawText(m->name, x + THEME.padding, labelY, labelSize, THEME.labelText);
+
+  int groupX = x + w - THEME.padding - (int)groupWidth;
   if (arrowWidth > 0) {
     float ax = (float)(groupX - arrowWidth);
-    float ay = rowY + h / 2.0f;
+    float ay = (float)(valueY + (int)valueSize / 2);
     float half = arrowSize / 2.0f;
     if (dir > 0) {
       DrawTriangle((Vector2){ ax, ay + half },
@@ -240,19 +249,16 @@ static void drawMetricRow(const Metric* m, int x, int y, int w, int h, int index
   }
 
   drawText(valueBuf, groupX, valueY, valueSize, THEME.valueText);
-
-  // Sparkline lives in the gap between label and value group,
-  // as a small centered element rather than a full-row stretch
-  int labelEndX = x + THEME.padding + (int)measureText(m->name, labelSize).x;
-  int sparkX = labelEndX + 10;
-  int sparkMaxW = (groupX - arrowWidth) - 10 - sparkX;
-  if (sparkMaxW > 110) sparkMaxW = 110;
-  int sparkH = imin(h - 8, 24);
-  int sparkY = rowY + (h - sparkH) / 2;
-  drawSparkline(hist, metricIdx, sparkX, sparkY, sparkMaxW, sparkH);
   int unitX = groupX + (int)measureText(valueBuf, valueSize).x + 4;
-  int unitY = rowY + (h - (int)unitSize) / 2 + (int)(valueSize - unitSize) / 3;
+  int unitY = valueY + (int)(valueSize - unitSize) / 3;
   drawText(unit, unitX, unitY, unitSize, THEME.labelText);
+
+  // Sparkline: full content width, directly under its metric
+  if (showSpark) {
+    drawSparkline(hist, metricIdx,
+                  x + THEME.padding, groupY + textLineH + 6,
+                  contentWidth, sparkH);
+  }
 }
 
 
