@@ -40,10 +40,11 @@ int main(void) {
 
   InitDashboard(sensors, sensorCount);
 
-  // One reading history per sensor
+  // One reading history per sensor, seeded with the config snapshot
   sensorHistory* histories = malloc(sensorCount * sizeof(sensorHistory));
   for (size_t i = 0; i < sensorCount; i++) {
     initSensorHistory(&histories[i], HISTORY_CAPACITY);
+    pushSensorReading(&histories[i], sensors[i]);
   }
 
   // One task per sensor, updating its registry entry in place
@@ -55,7 +56,7 @@ int main(void) {
   }
 
   while (!WindowShouldClose()) {
-    DrawDashboard(sensors, sensorCount, screenWidth, screenHeight);
+    DrawDashboard(sensors, sensorCount, histories, screenWidth, screenHeight);
 
     for (size_t i = 0; i < sensorCount; i++) {
       runTask(&tasks[i]);

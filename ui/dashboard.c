@@ -128,8 +128,56 @@ static void drawCenteredInRow(const char* text, int x, int y, int w, int h,
            fontSize, color);
 }
 
+// Draws the metric's reading history as a small trend line between
+// the label and the value. Returns the width consumed (0 if skipped).
+#define SPARK_MAX_POINTS 64
+
+static int drawSparkline(const sensorHistory* hist, size_t metricIdx,
+                         int x, int y, int maxW, int h) {
+  if (hist == NULL || maxW < 24) return 0;
+
+  size_t count = sensorHistorySize(hist);
+  if (count < 2) return 0; // a trend needs at least two readings
+  if (count > SPARK_MAX_POINTS) count = SPARK_MAX_POINTS;
+
+  // Gather the series and its range
+  float values[SPARK_MAX_POINTS];
+  float min = 0.0f, max = 0.0f;
+  for (size_t i = 0; i < count; i++) {
+    const sensorData* reading = sensorHistoryAt(hist, i);
+    if (metricIdx >= reading->metricCount) return 0;
+    values[i] = reading->metrics[metricIdx].value;
+    if (i == 0 || values[i] < min) min = values[i];
+    if (i == 0 || values[i] > max) max = values[i];
+  }
+
+  // Vertical layout: small margins inside the row
+  float top = (float)y + 4.0f;
+  float bottom = (float)(y + h) - 4.0f;
+  if (bottom - top < 4.0f) return 0;
+
+  Vector2 points[SPARK_MAX_POINTS];
+  float step = (float)maxW / (float)(count - 1);
+  for (size_t i = 0; i < count; i++) {
+    float t = (max > min) ? (values[i] - min) / (max - min) : 0.5f;
+    points[i] = (Vector2){ (float)x + step * (float)i,
+                           bottom - t * (bottom - top) };
+  }
+
+  Color lineColor = { THEME.valueText.r, THEME.valueText.g,
+                      THEME.valueText.b, 110 };
+  DrawLineStrip(points, (int)count, lineColor);
+
+  // Bright dot on the newest reading
+  Vector2 last = points[count - 1];
+  DrawCircleV(last, 2.0f, THEME.valueText);
+
+  return maxW;
+}
+
 static void drawMetricRow(const Metric* m, int x, int y, int w, int h, int index,
-                          float displayValue, signed char dir, float dirAlpha) {
+                          float displayValue, signed char dir, float dirAlpha,
+                          const sensorHistory* hist, size_t metricIdx) {
   int rowY = y + index * h;
 
   char valueBuf[32];
@@ -192,13 +240,24 @@ static void drawMetricRow(const Metric* m, int x, int y, int w, int h, int index
   }
 
   drawText(valueBuf, groupX, valueY, valueSize, THEME.valueText);
+
+  // Sparkline lives in the gap between label and value group,
+  // as a small centered element rather than a full-row stretch
+  int labelEndX = x + THEME.padding + (int)measureText(m->name, labelSize).x;
+  int sparkX = labelEndX + 10;
+  int sparkMaxW = (groupX - arrowWidth) - 10 - sparkX;
+  if (sparkMaxW > 110) sparkMaxW = 110;
+  int sparkH = imin(h - 8, 24);
+  int sparkY = rowY + (h - sparkH) / 2;
+  drawSparkline(hist, metricIdx, sparkX, sparkY, sparkMaxW, sparkH);
   int unitX = groupX + (int)measureText(valueBuf, valueSize).x + 4;
   int unitY = rowY + (h - (int)unitSize) / 2 + (int)(valueSize - unitSize) / 3;
   drawText(unit, unitX, unitY, unitSize, THEME.labelText);
 }
 
 
-static void drawSensorCard(const sensorData* d, size_t sensorIdx, int x, int y, int w, int h) {
+static void drawSensorCard(const sensorData* d, size_t sensorIdx,
+                           const sensorHistory* hist, int x, int y, int w, int h) {
   DrawRectangleRounded((Rectangle){ (float)x, (float)y, (float)w, (float)h },
                        0.12f, 8, THEME.panel);
 
@@ -242,11 +301,13 @@ static void drawSensorCard(const sensorData* d, size_t sensorIdx, int x, int y, 
     }
     drawMetricRow(&d->metrics[i], x, metricsTop, w, rowHeight, (int)i,
                   g_display != NULL ? g_display[idx] : d->metrics[i].value,
-                  g_dir != NULL ? g_dir[idx] : 0, dirAlpha);
+                  g_dir != NULL ? g_dir[idx] : 0, dirAlpha,
+                  hist, i);
   }
 }
 
 void DrawDashboard(const sensorData* sensors, size_t sensorCount,
+                   const sensorHistory* histories,
                    int screenWidth, int screenHeight) {
   BeginDrawing();
   float dt = GetFrameTime();
@@ -289,7 +350,9 @@ void DrawDashboard(const sensorData* sensors, size_t sensorCount,
     int row = (int)i / cols;
     int x = THEME.padding + col * (cardWidth + THEME.cardGap);
     int y = THEME.topBarHeight + row * (cardHeight + THEME.cardGap);
-    drawSensorCard(&sensors[i], i, x, y, cardWidth, cardHeight);
+    drawSensorCard(&sensors[i], i,
+                   histories != NULL ? &histories[i] : NULL,
+                   x, y, cardWidth, cardHeight);
   }
 
   EndDrawing();
