@@ -177,7 +177,8 @@ static int drawSparkline(const sensorHistory* hist, size_t metricIdx,
 
 static void drawMetricRow(const Metric* m, int x, int y, int w, int h, int index,
                           float displayValue, signed char dir, float dirAlpha,
-                          const sensorHistory* hist, size_t metricIdx) {
+                          const sensorHistory* hist, size_t metricIdx,
+                          float scale) {
   // Each metric is a two-line block: text line on top, sparkline
   // underneath. The sparkline is earned from leftover block height:
   // if the card is too dense, the row degrades to text only.
@@ -187,8 +188,8 @@ static void drawMetricRow(const Metric* m, int x, int y, int w, int h, int index
   snprintf(valueBuf, sizeof(valueBuf), "%g", roundTo2(displayValue));
   const char* unit = m->unit;
 
-  // Text sizes: fixed for readability, independent of block height
-  float valueSize = (float)imax(11, imin(20, (h * 2) / 3));
+  // Text sizes: grow with the card (scale), capped for readability
+  float valueSize = (float)imax(11, imin((int)(20 * scale), (h * 2) / 3));
   float labelSize = imax(9.0f, valueSize / 2);
   float unitSize  = imax(8.0f, valueSize / 2 + 1);
 
@@ -221,7 +222,7 @@ static void drawMetricRow(const Metric* m, int x, int y, int w, int h, int index
 
   // --- Vertical layout: text line first, sparkline gets the leftover ---
   int textLineH = (int)valueSize + 6;
-  int sparkH = imin(h - textLineH - 6, 26); // 6px gap, 26px cap
+  int sparkH = imin(h - textLineH - 6, (int)(26 * scale)); // 6px gap, capped
   bool showSpark = sparkH >= 10;
 
   int groupH = textLineH + (showSpark ? sparkH + 6 : 0);
@@ -263,12 +264,13 @@ static void drawMetricRow(const Metric* m, int x, int y, int w, int h, int index
 
 
 static void drawSensorCard(const sensorData* d, size_t sensorIdx,
-                           const sensorHistory* hist, int x, int y, int w, int h) {
+                           const sensorHistory* hist, int x, int y, int w, int h,
+                           float scale) {
   DrawRectangleRounded((Rectangle){ (float)x, (float)y, (float)w, (float)h },
                        0.12f, 8, THEME.panel);
 
   // --- Header: sensor name, id on the right ---
-  float headerSize = (float)imax(10, imin(16, h / 5));
+  float headerSize = (float)imax(10, imin(16 * scale, h / 5));
   char headerBuf[SENSOR_NAME_MAX];
   snprintf(headerBuf, sizeof(headerBuf), "%s",
            d->name[0] != '\0' ? d->name : "sensor");
@@ -308,7 +310,7 @@ static void drawSensorCard(const sensorData* d, size_t sensorIdx,
     drawMetricRow(&d->metrics[i], x, metricsTop, w, rowHeight, (int)i,
                   g_display != NULL ? g_display[idx] : d->metrics[i].value,
                   g_dir != NULL ? g_dir[idx] : 0, dirAlpha,
-                  hist, i);
+                  hist, i, scale);
   }
 }
 
@@ -356,9 +358,11 @@ void DrawDashboard(const sensorData* sensors, size_t sensorCount,
     int row = (int)i / cols;
     int x = THEME.padding + col * (cardWidth + THEME.cardGap);
     int y = THEME.topBarHeight + row * (cardHeight + THEME.cardGap);
+    // Typography grows with card size (reference: ~220px tall cards)
+    float scale = imax(100, imin(200, (cardHeight * 100) / 220)) / 100.0f;
     drawSensorCard(&sensors[i], i,
                    histories != NULL ? &histories[i] : NULL,
-                   x, y, cardWidth, cardHeight);
+                   x, y, cardWidth, cardHeight, scale);
   }
 
   EndDrawing();

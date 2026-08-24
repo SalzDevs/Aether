@@ -24,10 +24,12 @@ static void mockSensorTask(void *ctx) {
 }
 
 int main(void) {
-  const int screenWidth = 800;
-  const int screenHeight = 450;
+  const int initialWidth = 800;
+  const int initialHeight = 450;
 
-  InitWindow(screenWidth, screenHeight, "Aether");
+  SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+  InitWindow(initialWidth, initialHeight, "Aether");
+  SetWindowMinSize(480, 320);
   SetTargetFPS(60);
 
   srand(time(NULL));
@@ -56,7 +58,8 @@ int main(void) {
   }
 
   while (!WindowShouldClose()) {
-    DrawDashboard(sensors, sensorCount, histories, screenWidth, screenHeight);
+    DrawDashboard(sensors, sensorCount, histories,
+                  GetScreenWidth(), GetScreenHeight());
 
     for (size_t i = 0; i < sensorCount; i++) {
       runTask(&tasks[i]);
