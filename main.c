@@ -4,21 +4,23 @@
 
 #include "raylib.h"
 #include "sensor/sensor.h"
-#include "Queue/queue.h"
+#include "History/history.h"
 #include "scheduler/scheduler.h"
 #include "config/config.h"
 #include "ui/dashboard.h"
 
+#define HISTORY_CAPACITY 64
+
 typedef struct {
-  sensorQueue *sq;
-  sensorData data;
+  sensorData* sensor;    // entry in the registry, updated in place
+  sensorHistory* hist;   // this sensor's reading history
 } taskArgs;
 
 static void mockSensorTask(void *ctx) {
   taskArgs *args = ctx;
 
-  sensorDataUpdate(&args->data, (float)GetTime());
-  addElemToQueue(args->sq, args->data);
+  sensorDataUpdate(args->sensor, (float)GetTime());
+  pushSensorReading(args->hist, *args->sensor);
 }
 
 int main(void) {
@@ -31,42 +33,41 @@ int main(void) {
 
   srand(time(NULL));
 
-  //Load sensors from config
-  size_t sensorCount;
-  sensorData* configSensors = NULL;
-  bool validConfig = LoadSensorConfig("config/sensors.yaml", &sensorCount, &configSensors);
-  if (!validConfig) return 1;
+  // Load sensors from config; the array stays alive and acts as the
+  // registry: the single, authoritative copy of each sensor's state.
+  size_t sensorCount = 0;
+  sensorData* sensors = NULL;
+  if (!LoadSensorConfig("config/sensors.yaml", &sensorCount, &sensors)) return 1;
 
-  //Initialize queue seeded with the config values
-  sensorQueue sq;
-  initSensorQueue(&sq);
+  // One reading history per sensor
+  sensorHistory* histories = malloc(sensorCount * sizeof(sensorHistory));
   for (size_t i = 0; i < sensorCount; i++) {
-    addElemToQueue(&sq, configSensors[i]);
+    initSensorHistory(&histories[i], HISTORY_CAPACITY);
   }
 
-  //One task per sensor, each owning its persistent simulated state
+  // One task per sensor, updating its registry entry in place
   taskArgs* args = malloc(sensorCount * sizeof(taskArgs));
   Task* tasks = malloc(sensorCount * sizeof(Task));
   for (size_t i = 0; i < sensorCount; i++) {
-    args[i] = (taskArgs){ .sq = &sq, .data = configSensors[i] };
+    args[i] = (taskArgs){ .sensor = &sensors[i], .hist = &histories[i] };
     initTask(&tasks[i], 3, mockSensorTask, &args[i], time(NULL));
   }
 
-  free(configSensors);
-
   while (!WindowShouldClose()) {
-    DrawDashboard(&sq, screenWidth, screenHeight);
+    DrawDashboard(sensors, sensorCount, screenWidth, screenHeight);
 
     for (size_t i = 0; i < sensorCount; i++) {
-      runTask(&tasks[i], &sq);
+      runTask(&tasks[i]);
     }
-
-    printQueue(&sq);
   }
 
+  for (size_t i = 0; i < sensorCount; i++) {
+    destroySensorHistory(&histories[i]);
+  }
+  free(histories);
   free(args);
   free(tasks);
-  destroySensorQueue(&sq);
+  free(sensors);
   UnloadDashboard();
   CloseWindow();
   return 0;

@@ -10,9 +10,9 @@ Aether is a small C application that simulates sensor readings and displays them
 - Load sensor data from YAML configuration
 - Simulate changing sensor values
 - Schedule periodic sensor updates
-- Store readings in a FIFO queue
+- Store recent readings in per-sensor history buffers
 - Display sensor values with Raylib
-- Run unit tests for configuration, queue, scheduler, and sensor modules
+- Run unit tests for configuration, history, scheduler, and sensor modules
 
 ## Requirements
 
@@ -69,7 +69,7 @@ make test
 The test suite covers:
 
 - sensor initialization and simulated updates;
-- queue insertion, removal, and growth;
+- reading history ordering and oldest-entry eviction;
 - task scheduling;
 - YAML configuration loading.
 
@@ -113,7 +113,7 @@ Note: a `%` unit must be quoted (`"%"`) because libyaml reserves the percent sig
 .
 ├── assets/fonts/ Bundled font (JetBrains Mono, SIL OFL)
 ├── config/       Sensor configuration loading and YAML data
-├── Queue/        FIFO sensor-data queue
+├── History/      Bounded per-sensor reading history (ring buffer)
 ├── scheduler/    Periodic task scheduling
 ├── sensor/       Sensor data types and simulation
 ├── ui/           Dashboard rendering, theme tokens (Raylib)
@@ -131,10 +131,10 @@ sensors.yaml
 configuration parser
      │
      ▼
-sensor data queue ◄── scheduled sensor tasks
-     │
-     ▼
-Raylib sensor dashboard
+sensor registry ◄── scheduled sensor tasks (update in place)
+     │                    │
+     ▼                    ▼
+Raylib dashboard     per-sensor reading history (ring buffers)
 ```
 
 ## License

@@ -2,7 +2,6 @@
 #include <assert.h>
 #include <stdio.h>
 #include <time.h>
-
 static int dummy_calls = 0;
 
 static void dummy_function(void *ctx) { (void)ctx; dummy_calls++; }
@@ -43,54 +42,31 @@ static void test_wrap_around_still_runs(void) {
   assert(shouldRunTask(30, 1000, 10));
 }
 
-static sensorQueue make_queue_with_sensors(size_t count) {
-  sensorQueue sq;
-  initSensorQueue(&sq);
-  for (size_t i = 1; i <= count; i++) {
-    sensorData d;
-    initSensorData(&d);
-    d.id = (int)i;
-    addElemToQueue(&sq, d);
-  }
-  return sq;
-}
-
-static void test_run_task_executes_and_removes_front_when_period_elapsed(void) {
-  sensorQueue sq = make_queue_with_sensors(2);
-
+static void test_run_task_executes_and_updates_last_run_when_period_elapsed(void) {
   Task t;
-  initTask(&t, 3, dummy_function, NULL, (uint64_t)time(NULL) - 3);
+  uint64_t start = (uint64_t)time(NULL) - 3;
+  initTask(&t, 3, dummy_function, NULL, start);
   dummy_calls = 0;
-  runTask(&t, &sq);
+  runTask(&t);
 
   assert(dummy_calls == 1);
-  assert(sq.current_size == 1);
-  assert(sq.data[0].id == 2);
+  assert(t.last_run >= start + 3); // last_run moved forward
 }
 
 static void test_run_task_does_nothing_before_period(void) {
-  sensorQueue sq = make_queue_with_sensors(2);
-
   Task t;
-  initTask(&t, 3, dummy_function, NULL, (uint64_t)time(NULL));
+  uint64_t start = (uint64_t)time(NULL);
+  initTask(&t, 3, dummy_function, NULL, start);
   dummy_calls = 0;
-  runTask(&t, &sq);
+  runTask(&t);
 
   assert(dummy_calls == 0);
-  assert(sq.current_size == 2);
+  assert(t.last_run == start); // unchanged
 }
 
-static void test_run_task_on_empty_queue_does_not_crash(void) {
-  sensorQueue sq;
-  initSensorQueue(&sq);
-
-  Task t;
-  initTask(&t, 0, dummy_function, NULL, (uint64_t)time(NULL));
-  dummy_calls = 0;
-  runTask(&t, &sq);
-
-  assert(dummy_calls == 1);
-  assert(sq.current_size == 0);
+static void test_run_task_with_null_task_does_not_crash(void) {
+  runTask(NULL);
+  runTask(&(Task){ .function = NULL });
 }
 
 int main(void) {
@@ -101,9 +77,9 @@ int main(void) {
   test_should_run_long_past_period();
   test_zero_period_always_ready();
   test_wrap_around_still_runs();
-  test_run_task_executes_and_removes_front_when_period_elapsed();
+  test_run_task_executes_and_updates_last_run_when_period_elapsed();
   test_run_task_does_nothing_before_period();
-  test_run_task_on_empty_queue_does_not_crash();
+  test_run_task_with_null_task_does_not_crash();
   printf("All scheduler tests passed\n");
   return 0;
 }

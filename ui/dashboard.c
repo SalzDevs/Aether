@@ -151,7 +151,8 @@ static void drawSensorCard(const sensorData* d, int x, int y, int w, int h) {
   }
 }
 
-void DrawDashboard(const sensorQueue* sq, int screenWidth, int screenHeight) {
+void DrawDashboard(const sensorData* sensors, size_t sensorCount,
+                   int screenWidth, int screenHeight) {
   BeginDrawing();
   ClearBackground(THEME.background);
 
@@ -163,7 +164,7 @@ void DrawDashboard(const sensorQueue* sq, int screenWidth, int screenHeight) {
            screenWidth - THEME.padding - (int)timeBounds.x, 12, 14,
            THEME.labelText);
 
-  size_t count = sq->current_size;
+  size_t count = sensorCount;
   if (count == 0) {
     drawCenteredInRow("No sensors loaded", 0, THEME.topBarHeight, screenWidth,
                       screenHeight - THEME.topBarHeight, 20, THEME.labelText);
@@ -191,7 +192,7 @@ void DrawDashboard(const sensorQueue* sq, int screenWidth, int screenHeight) {
     int row = (int)i / cols;
     int x = THEME.padding + col * (cardWidth + THEME.cardGap);
     int y = THEME.topBarHeight + row * (cardHeight + THEME.cardGap);
-    drawSensorCard(&sq->data[i], x, y, cardWidth, cardHeight);
+    drawSensorCard(&sensors[i], x, y, cardWidth, cardHeight);
   }
 
   EndDrawing();
