@@ -29,6 +29,9 @@ typedef struct {
   Color iconColor;      // idle icon tint (dim)
   Color iconHoverColor; // icon tint while hovered
 
+  // Panels
+  Color panelHoverColor; // hovered row inside a panel
+
   // Motion
   float arrowHoldSeconds; // how long up/down indicators stay visible
   float valueSmoothing;   // how fast displayed values chase actual ones (per second)

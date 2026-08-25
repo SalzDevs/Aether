@@ -20,6 +20,7 @@ const DashboardTheme THEME = {
     .fontAtlasSize  = 64.0f,
     .iconColor      = { 145, 152, 168, 255 },
     .iconHoverColor = { 235, 240, 250, 255 },
+    .panelHoverColor = { 44, 49, 62, 255 },
     .arrowHoldSeconds = 1.5f,
     .valueSmoothing   = 10.0f,
 };
@@ -36,7 +37,17 @@ static signed char* g_dir = NULL; // direction of last change: -1, 0, +1
 static float* g_dirTimer = NULL;  // seconds left before the arrow fades
 static size_t g_sensorCount = 0;
 
+// --- Settings panel (pure UI state) ---
+static bool g_settingsOpen = false;
+static bool g_showSparklines = true;     // "Trend lines"
+static bool g_animateValues = true;      // "Animated values"
+static bool g_showIndicators = true;     // "Change indicators"
+static Rectangle g_settingsPanelRect = { 0 };
+
 void InitDashboard(const sensorData* sensors, size_t sensorCount) {
+  // ESC must close the settings panel, not quit the app
+  SetExitKey(KEY_NULL);
+
   size_t slots = sensorCount * MAX_METRICS;
   g_display = calloc(slots, sizeof(float));
   g_prev = calloc(slots, sizeof(float));
@@ -82,11 +93,14 @@ static void updateAnimations(const sensorData* sensors, float dt) {
       size_t idx = s * MAX_METRICS + m;
       float target = sensors[s].metrics[m].value;
 
-      g_display[idx] += (target - g_display[idx]) * alpha;
+      // With animations off, displayed values snap to the readings
+      g_display[idx] = g_animateValues
+          ? g_display[idx] + (target - g_display[idx]) * alpha
+          : target;
 
       if (target != g_prev[idx]) {
         g_dir[idx] = target > g_prev[idx] ? 1 : -1;
-        g_dirTimer[idx] = THEME.arrowHoldSeconds;
+        g_dirTimer[idx] = g_showIndicators ? THEME.arrowHoldSeconds : 0.0f;
         g_prev[idx] = target;
       }
       if (g_dirTimer[idx] > 0.0f) g_dirTimer[idx] -= dt;
@@ -216,7 +230,7 @@ static void drawMetricRow(const Metric* m, int x, int y, int w, int h, int index
   float arrowSize = valueSize / 3.0f;
   int arrowWidth = 0;
   Color arrowColor = THEME.labelText;
-  if (dir != 0 && dirAlpha > 0.0f) {
+  if (dir != 0 && dirAlpha > 0.0f && g_showIndicators) {
     arrowWidth = (int)arrowSize + 6;
     Color base = dir > 0 ? THEME.upColor : THEME.downColor;
     arrowColor = (Color){ base.r, base.g, base.b,
@@ -225,7 +239,8 @@ static void drawMetricRow(const Metric* m, int x, int y, int w, int h, int index
 
   // --- Vertical layout: text line first, sparkline gets the leftover ---
   int textLineH = (int)valueSize + 6;
-  int sparkH = imin(h - textLineH - 6, (int)(26 * scale)); // 6px gap, capped
+  bool sparkWanted = g_showSparklines && hist != NULL;
+  int sparkH = sparkWanted ? imin(h - textLineH - 6, (int)(26 * scale)) : 0;
   bool showSpark = sparkH >= 10;
 
   int groupH = textLineH + (showSpark ? sparkH + 6 : 0);
@@ -344,6 +359,73 @@ static void drawCogwheel(Vector2 center, float radius, Color color) {
   DrawCircleV(center, radius * 0.35f, THEME.background); // center hole
 }
 
+// Draws an on/off pill switch; returns true when clicked.
+static bool drawTogglePill(bool value, int x, int y) {
+  const float pillW = 34, pillH = 16;
+  Rectangle pill = { (float)x, (float)y, pillW, pillH };
+
+  Color track = value ? THEME.valueText : THEME.divider;
+  DrawRectangleRounded(pill, 0.6f, 6, track);
+
+  float knobR = pillH / 2.0f - 2.0f;
+  float knobX = value ? x + pillW - knobR - 2.0f : x + knobR + 2.0f;
+  DrawCircleV((Vector2){ knobX, y + pillH / 2.0f }, knobR, THEME.titleText);
+
+  return IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+         CheckCollisionPointRec(GetMousePosition(), pill);
+}
+
+// Draws one settings row (label + pill); returns true when clicked.
+static bool drawSettingsRow(const char* label, bool* value,
+                            Rectangle row) {
+  Vector2 mouse = GetMousePosition();
+  bool hover = CheckCollisionPointRec(mouse, row);
+  if (hover) DrawRectangleRec(row, THEME.panelHoverColor);
+
+  float labelSize = 13.0f;
+  int labelY = (int)row.y + ((int)row.height - (int)labelSize) / 2;
+  drawText(label, (int)row.x + THEME.padding, labelY, labelSize,
+           THEME.titleText);
+
+  float pillH = 16.0f;
+  float pillY = row.y + (row.height - pillH) / 2.0f;
+  bool clicked = drawTogglePill(*value,
+                                (int)(row.x + row.width - THEME.padding - 34),
+                                (int)pillY);
+  if (clicked) *value = !*value;
+  return clicked;
+}
+
+static void drawSettingsPanel(int screenWidth, int screenHeight) {
+  const float panelW = 320.0f;
+  const float rowH = 36.0f, headerH = 44.0f;
+  const float panelH = headerH + 3 * rowH + 12.0f;
+
+  // Dim overlay: pushes the dashboard back, modal-style
+  DrawRectangle(0, 0, screenWidth, screenHeight, (Color){ 0, 0, 0, 150 });
+
+  Rectangle panel = { (screenWidth - panelW) / 2.0f,
+                      (screenHeight - panelH) / 2.0f,
+                      panelW, panelH };
+  DrawRectangleRounded(panel, 0.06f, 8, THEME.panel);
+
+  drawText("SETTINGS", (int)panel.x + THEME.padding,
+           (int)panel.y + 14, 15, THEME.titleText);
+  DrawLine((int)panel.x + THEME.padding, (int)(panel.y + headerH) - 6,
+           (int)(panel.x + panelW - THEME.padding), (int)(panel.y + headerH) - 6,
+           THEME.divider);
+
+  Rectangle row = { panel.x + 4, panel.y + headerH, panelW - 8, rowH };
+  drawSettingsRow("Trend lines", &g_showSparklines, row);
+  row.y += rowH;
+  drawSettingsRow("Animated values", &g_animateValues, row);
+  row.y += rowH;
+  drawSettingsRow("Change indicators", &g_showIndicators, row);
+
+  // remember the panel rect for the outside-click check
+  g_settingsPanelRect = panel;
+}
+
 void DrawDashboard(const sensorData* sensors, size_t sensorCount,
                    const sensorHistory* histories,
                    int screenWidth, int screenHeight) {
@@ -365,6 +447,15 @@ void DrawDashboard(const sensorData* sensors, size_t sensorCount,
   };
   bool iconHovered = CheckCollisionPointRec(GetMousePosition(), iconHit);
 
+  // --- Settings panel input: gear toggles, outside click / ESC closes ---
+  Vector2 mouse = GetMousePosition();
+  if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    if (iconHovered) g_settingsOpen = !g_settingsOpen;
+    else if (g_settingsOpen && !CheckCollisionPointRec(mouse, g_settingsPanelRect))
+      g_settingsOpen = false;
+  }
+  if (g_settingsOpen && IsKeyPressed(KEY_ESCAPE)) g_settingsOpen = false;
+
   const char* timeText = TextFormat("%.1f s", GetTime());
   Vector2 timeBounds = measureText(timeText, 14);
   drawText(timeText,
@@ -378,6 +469,7 @@ void DrawDashboard(const sensorData* sensors, size_t sensorCount,
   if (count == 0) {
     drawCenteredInRow("No sensors loaded", 0, THEME.topBarHeight, screenWidth,
                       screenHeight - THEME.topBarHeight, 20, THEME.labelText);
+    if (g_settingsOpen) drawSettingsPanel(screenWidth, screenHeight);
     EndDrawing();
     return;
   }
@@ -408,6 +500,9 @@ void DrawDashboard(const sensorData* sensors, size_t sensorCount,
                    histories != NULL ? &histories[i] : NULL,
                    x, y, cardWidth, cardHeight, scale);
   }
+
+  // Settings modal renders on top of everything
+  if (g_settingsOpen) drawSettingsPanel(screenWidth, screenHeight);
 
   EndDrawing();
 }
