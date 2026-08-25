@@ -25,6 +25,10 @@ typedef struct {
   // Typography (base atlas size the font is loaded at)
   float fontAtlasSize;
 
+  // Icons
+  Color iconColor;      // idle icon tint (dim)
+  Color iconHoverColor; // icon tint while hovered
+
   // Motion
   float arrowHoldSeconds; // how long up/down indicators stay visible
   float valueSmoothing;   // how fast displayed values chase actual ones (per second)

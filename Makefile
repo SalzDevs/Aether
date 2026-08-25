@@ -32,7 +32,7 @@ TEST_BINS = $(patsubst tests/test_%.c,test_%,$(TEST_SRCS))
 
 # Final link step
 $(TARGET): $(OBJS)
-	$(CC) $(OBJS) -o $(TARGET) $(RAYLIB_LIBS) $(YAML_LIBS)
+	$(CC) $(OBJS) -o $(TARGET) $(RAYLIB_LIBS) $(YAML_LIBS) -lm
 
 
 # -------------------------
@@ -70,7 +70,7 @@ test: $(TEST_BINS)
 # Each test file compiles into its own binary
 # tests/test_foo.c -> test_foo
 test_%: tests/test_%.c $(MODULE_SRCS)
-	$(CC) $(CFLAGS) $(YAML_CFLAGS) -I. $< $(MODULE_SRCS) -o $@ $(YAML_LIBS)
+	$(CC) $(CFLAGS) $(YAML_CFLAGS) -I. $< $(MODULE_SRCS) -o $@ $(YAML_LIBS) -lm
 
 
 # -------------------------

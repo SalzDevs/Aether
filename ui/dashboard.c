@@ -1,6 +1,7 @@
 #include "dashboard.h"
 #include "theme.h"
 #include "raylib.h"
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -17,6 +18,8 @@ const DashboardTheme THEME = {
     .cardGap        = 12,
     .topBarHeight   = 34,
     .fontAtlasSize  = 64.0f,
+    .iconColor      = { 145, 152, 168, 255 },
+    .iconHoverColor = { 235, 240, 250, 255 },
     .arrowHoldSeconds = 1.5f,
     .valueSmoothing   = 10.0f,
 };
@@ -314,6 +317,33 @@ static void drawSensorCard(const sensorData* d, size_t sensorIdx,
   }
 }
 
+// Draws a gear silhouette (triangle fan) with a punched center hole.
+static void drawCogwheel(Vector2 center, float radius, Color color) {
+  const int teeth = 8;
+  const float rootRatio = 0.72f; // valley radius as fraction of outer
+  const float duty = 0.55f;      // fraction of each cycle spent at outer radius
+
+  enum { MAX_OUTLINE = 256 };
+  Vector2 points[MAX_OUTLINE + 2];
+  int count = 0;
+  points[count++] = center; // triangle fan center
+
+  float stepDegrees = 360.0f / (float)teeth;
+  for (float a = 0.0f; a < 360.0f; a += 1.5f) {
+    if (count >= MAX_OUTLINE) break;
+    float phase = fmodf(a, stepDegrees) / stepDegrees;
+    float r = (phase < duty) ? radius : radius * rootRatio;
+    float rad = a * DEG2RAD;
+    // y negated: screen y grows downward, raylib wants counter-clockwise
+    points[count++] = (Vector2){ center.x + cosf(rad) * r,
+                                 center.y - sinf(rad) * r };
+  }
+  points[count++] = points[1]; // close the outline
+
+  DrawTriangleFan(points, count, color);
+  DrawCircleV(center, radius * 0.35f, THEME.background); // center hole
+}
+
 void DrawDashboard(const sensorData* sensors, size_t sensorCount,
                    const sensorHistory* histories,
                    int screenWidth, int screenHeight) {
@@ -324,11 +354,25 @@ void DrawDashboard(const sensorData* sensors, size_t sensorCount,
 
   // Top bar
   drawText("AETHER", THEME.padding, 10, 16, THEME.titleText);
+
+  // Settings cogwheel: far top-right, timer sits left of it
+  float iconRadius = 9.0f;
+  Vector2 iconCenter = { screenWidth - THEME.padding - iconRadius,
+                         THEME.topBarHeight / 2.0f };
+  Rectangle iconHit = {
+    iconCenter.x - iconRadius - 4, iconCenter.y - iconRadius - 4,
+    (iconRadius + 4) * 2, (iconRadius + 4) * 2
+  };
+  bool iconHovered = CheckCollisionPointRec(GetMousePosition(), iconHit);
+
   const char* timeText = TextFormat("%.1f s", GetTime());
   Vector2 timeBounds = measureText(timeText, 14);
   drawText(timeText,
-           screenWidth - THEME.padding - (int)timeBounds.x, 12, 14,
+           (int)iconCenter.x - iconRadius - 12 - (int)timeBounds.x, 12, 14,
            THEME.labelText);
+
+  drawCogwheel(iconCenter, iconRadius,
+               iconHovered ? THEME.iconHoverColor : THEME.iconColor);
 
   size_t count = sensorCount;
   if (count == 0) {
