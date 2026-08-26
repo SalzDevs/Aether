@@ -15,8 +15,9 @@ Aether is a small C application that simulates sensor readings and displays them
 
 - Load any number of sensors from a YAML config, each with an arbitrary
   list of named metrics carrying units (`temperature (C)`, `pressure (hPa)`, ...)
-- Adaptive card grid with sparklines, animated values, and up/down
-  change indicators
+- Adaptive card grid: each metric renders as a chip with its value,
+  sparkline, and up/down change indicator
+- Card detail view with large trend lines and min/avg/max stats per metric
 - Tabbed navigation: a tab holds as many cards as fit the window;
   overflow goes to numbered tabs (`1 2 ... N`), clickable and bound to
   `Alt/Cmd + 1..9`
@@ -24,7 +25,8 @@ Aether is a small C application that simulates sensor readings and displays them
   indicators at runtime
 - Fixed-slot task scheduler decoupled from data handling
 - Bounded per-sensor reading history (ring buffers)
-- Unit tests for configuration, history, scheduler, and sensor modules
+- Unit tests for configuration, history, scheduler, sensor, and
+  dashboard layout modules
 
 ## Demo
 
@@ -87,9 +89,11 @@ make test
 The test suite covers:
 
 - sensor initialization and simulated updates;
-- reading history ordering and oldest-entry eviction;
+- reading history ordering, oldest-entry eviction, and metric statistics;
 - task scheduling;
-- YAML configuration loading.
+- YAML configuration loading, including malformed input, unknown keys,
+  missing ids, and growing registries;
+- dashboard layout math: tab capacity, pagination limits, and range mapping.
 
 ## Configuration
 
@@ -146,7 +150,7 @@ Note: a `%` unit must be quoted (`"%"`) because libyaml reserves the percent sig
 ├── History/      Bounded per-sensor reading history (ring buffer)
 ├── scheduler/    Periodic task scheduling
 ├── sensor/       Sensor data types and simulation
-├── ui/           Dashboard rendering, theme tokens (Raylib)
+├── ui/           Dashboard rendering, layout math, theme tokens (Raylib)
 ├── tests/        Unit tests
 ├── main.c        Application entry point
 └── Makefile      Build and test commands
