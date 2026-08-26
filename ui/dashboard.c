@@ -645,6 +645,25 @@ void DrawDashboard(const sensorData* sensors, size_t sensorCount,
       g_detailSensor = -1; // the two modals are mutually exclusive
     }
   }
+  // Verify method
+  if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    if (iconHovered) {
+      g_settingsOpen = !g_settingsOpen;
+      g_detailSensor = -1;
+    }
+  }
+  // S key
+  if (IsKeyPressed(KEY_S)) {
+    g_settingsOpen = !g_settingsOpen;
+    g_detailSensor = -1;
+  }
+  // Modal close ESC
+  if (IsKeyPressed(KEY_ESCAPE)){
+    if (g_detailSensor >= 0) g_detailSensor = -1;
+    else if (g_settingsOpen) g_settingsOpen = false; 
+  }
+
+
   // Modals close only via ESC
   if (IsKeyPressed(KEY_ESCAPE)) {
     if (g_detailSensor >= 0) g_detailSensor = -1;
