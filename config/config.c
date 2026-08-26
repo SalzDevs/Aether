@@ -5,7 +5,7 @@
 #include <string.h>
 #include <yaml.h>
 
-#define MAX_SENSORS 32
+#define INITIAL_SENSOR_CAPACITY 8
 
 // Intermediate representation of one metric entry in the YAML file
 typedef struct {
@@ -190,7 +190,8 @@ static sensorData* fileToSensors(const char* fileName, size_t* count) {
   }
   yaml_parser_set_input_file(&parser, fptr);
 
-  sensorData* sensors = malloc(MAX_SENSORS * sizeof(sensorData));
+  size_t capacity = INITIAL_SENSOR_CAPACITY;
+  sensorData* sensors = malloc(capacity * sizeof(sensorData));
   *count = 0;
   bool ok = false;
 
@@ -221,10 +222,17 @@ static sensorData* fileToSensors(const char* fileName, size_t* count) {
       }
       yaml_event_delete(&event);
 
+      if (*count == capacity) {
+        // grow dynamically: the registry has no hard sensor limit
+        capacity *= 2;
+        sensorData* grown = realloc(sensors, capacity * sizeof(sensorData));
+        if (grown == NULL) { sequenceOk = false; break; }
+        sensors = grown;
+      }
+
       SensorSpec spec;
-      if (*count >= MAX_SENSORS || !parseSensorBody(&parser, &spec)) {
-        // extra entries are consumed but dropped when full
-        sequenceOk = (*count < MAX_SENSORS);
+      if (!parseSensorBody(&parser, &spec)) {
+        sequenceOk = false;
         break;
       }
       if (!spec.hasId) continue; // a sensor without an id is not usable

@@ -47,6 +47,39 @@ static void test_file_to_sensors(void) {
   free(sensors);
 }
 
+static void test_many_sensors_grow_registry(void) {
+  // The old parser silently dropped sensors past a hard cap (32).
+  // Generate 40 and make sure every one of them is loaded.
+  const char* path = "/tmp/aether_test_many.yaml";
+  FILE* f = fopen(path, "w");
+  assert(f != NULL);
+  fprintf(f, "sensors:\n");
+  for (int i = 1; i <= 40; i++) {
+    fprintf(f,
+        "  - id: %d\n"
+        "    name: sensor_%d\n"
+        "    metrics:\n"
+        "      - name: value\n"
+        "        unit: u\n"
+        "        value: %d\n",
+        i, i, i * 10);
+  }
+  fclose(f);
+
+  size_t count = 0;
+  sensorData* sensors = NULL;
+  bool ok = LoadSensorConfig(path, &count, &sensors);
+  assert(ok);
+  assert(count == 40);
+  assert(sensors[0].id == 1);
+  assert(value_of(&sensors[0], "value") == 10.0f);
+  assert(sensors[39].id == 40);
+  assert(value_of(&sensors[39], "value") == 400.0f);
+
+  free(sensors);
+  remove(path);
+}
+
 static void test_file_to_sensors_missing_file(void) {
   size_t count = 0;
   sensorData* sensors = NULL;
@@ -59,6 +92,7 @@ static void test_file_to_sensors_missing_file(void) {
 
 int main() {
   test_file_to_sensors();
+  test_many_sensors_grow_registry();
   test_file_to_sensors_missing_file();
   printf("All config tests passed\n");
   return 0;
