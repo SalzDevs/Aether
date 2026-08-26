@@ -537,23 +537,19 @@ static void drawDetailMetricBlock(const Metric* m, const sensorHistory* hist,
                        0.08f, 6, THEME.chip);
   int cx = chipX + 14, cw = chipW - 28;
 
-  // Sparkline fills the space between the text line and the stats line
-  float sparkH = (float)(chipH - textLineH - (int)statsH - 16);
-  bool showSpark = sparkH >= 24.0f;
-  if (sparkH > 90.0f) sparkH = 90.0f;
-
-  // Center the whole block vertically
-  int contentH = textLineH + 4 + (showSpark ? (int)sparkH + 6 : 0) +
-                 (int)statsH + 4;
-  int y0 = chipY + (chipH - contentH) / 2;
-
-  drawLabelValueLine(m->name, valueBuf, m->unit, cx, y0, cw, textLineH,
+  // Text line at the top, sparkline in the middle, stats always pinned
+  // to the bottom of the chip and centered horizontally.
+  int textY = chipY + 10;
+  drawLabelValueLine(m->name, valueBuf, m->unit, cx, textY, cw, textLineH,
                      10, valueSize, labelSize, unitSize, dir, dirAlpha);
 
-  int cursor = y0 + textLineH + 4;
+  int sparkTop = textY + textLineH + 4;
+  int statsY = chipY + chipH - (int)statsH - 10;
+  float sparkH = (float)(statsY - 6 - sparkTop);
+  bool showSpark = sparkH >= 24.0f;
+  if (sparkH > 90.0f) sparkH = 90.0f;
   if (showSpark) {
-    drawSparkline(hist, metricIdx, cx, cursor, cw, (int)sparkH);
-    cursor += (int)sparkH + 6;
+    drawSparkline(hist, metricIdx, cx, sparkTop, cw, (int)sparkH);
   }
 
   float min, max, avg;
@@ -562,7 +558,9 @@ static void drawDetailMetricBlock(const Metric* m, const sensorHistory* hist,
     snprintf(statsBuf, sizeof(statsBuf),
              "min %g  ·  avg %g  ·  max %g", roundTo2(min), roundTo2(avg),
              roundTo2(max));
-    drawText(statsBuf, cx, cursor, 12, THEME.labelText);
+    Vector2 bounds = measureText(statsBuf, 12);
+    drawText(statsBuf, (int)(chipX + (chipW - bounds.x) / 2.0f), statsY, 12,
+             THEME.labelText);
   }
 }
 
