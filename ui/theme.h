@@ -10,6 +10,7 @@ typedef struct {
   // Palette
   Color background; // window background
   Color panel;      // sensor card fill
+  Color chip;       // metric chip fill inside a card (darker than panel)
   Color titleText;  // headers, app title, sensor names
   Color labelText;  // metric names, units, secondary info
   Color valueText;  // metric readings

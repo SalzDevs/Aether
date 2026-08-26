@@ -9,6 +9,7 @@
 const DashboardTheme THEME = {
     .background     = { 24, 26, 32, 255 },
     .panel          = { 33, 37, 47, 255 },
+    .chip           = { 26, 29, 38, 255 },
     .titleText      = { 235, 240, 250, 255 },
     .labelText      = { 145, 152, 168, 255 },
     .valueText      = { 110, 190, 255, 255 },
@@ -48,6 +49,10 @@ static bool g_animateValues = true;      // "Animated values"
 static bool g_showIndicators = true;     // "Change indicators"
 static Rectangle g_settingsPanelRect = { 0 };
 
+// --- Detail view (pure UI state; index into the registry, -1 = closed) ---
+static int g_detailSensor = -1;
+static Rectangle g_detailPanelRect = { 0 };
+
 // --- Tab pagination (pure UI state) ---
 static int g_currentPage = 0;
 
@@ -72,7 +77,13 @@ void InitDashboard(const sensorData* sensors, size_t sensorCount) {
   }
 
   if (FileExists(FONT_PATH)) {
-    g_font = LoadFontEx(FONT_PATH, (int)THEME.fontAtlasSize, NULL, 0);
+    // ASCII range plus the symbols units and labels use
+    int codepoints[98];
+    for (int i = 0; i < 95; i++) codepoints[i] = 32 + i;
+    codepoints[95] = 0xB7; // middle dot (stats separator)
+    codepoints[96] = 0xB0; // degree sign
+    codepoints[97] = 0xB5; // micro sign
+    g_font = LoadFontEx(FONT_PATH, (int)THEME.fontAtlasSize, codepoints, 98);
     SetTextureFilter(g_font.texture, TEXTURE_FILTER_BILINEAR);
     g_fontLoaded = true;
   } else {
@@ -196,6 +207,46 @@ static int drawSparkline(const sensorHistory* hist, size_t metricIdx,
   return maxW;
 }
 
+// Draws one label/value line: label on the left, value + unit (+ change
+// arrow) on the right. Sizes are computed by the caller.
+static void drawLabelValueLine(const char* label, const char* valueBuf,
+                               const char* unit, int x, int y, int w, int lineH,
+                               int pad, float valueSize, float labelSize,
+                               float unitSize, signed char dir,
+                               float dirAlpha) {
+  float groupWidth = measureText(valueBuf, valueSize).x + 4 +
+                     measureText(unit, unitSize).x;
+  int groupX = x + w - pad - (int)groupWidth;
+
+  int labelY = y + (lineH - (int)labelSize) / 2;
+  int valueY = y + (lineH - (int)valueSize) / 2;
+  drawText(label, x + pad, labelY, labelSize, THEME.labelText);
+
+  float arrowSize = valueSize / 3.0f;
+  if (dir != 0 && dirAlpha > 0.0f && g_showIndicators) {
+    Color base = dir > 0 ? THEME.upColor : THEME.downColor;
+    Color arrowColor = (Color){ base.r, base.g, base.b,
+                                (unsigned char)(255 * dirAlpha) };
+    float ax = (float)(groupX - (int)arrowSize - 6);
+    float ay = (float)(valueY + (int)valueSize / 2);
+    float half = arrowSize / 2.0f;
+    if (dir > 0) {
+      DrawTriangle((Vector2){ ax, ay + half },
+                   (Vector2){ ax + arrowSize, ay + half },
+                   (Vector2){ ax + half, ay - half }, arrowColor);
+    } else {
+      DrawTriangle((Vector2){ ax + arrowSize, ay - half },
+                   (Vector2){ ax, ay - half },
+                   (Vector2){ ax + half, ay + half }, arrowColor);
+    }
+  }
+
+  drawText(valueBuf, groupX, valueY, valueSize, THEME.valueText);
+  int unitX = groupX + (int)measureText(valueBuf, valueSize).x + 4;
+  int unitY = valueY + (int)(valueSize - unitSize) / 3;
+  drawText(unit, unitX, unitY, unitSize, THEME.labelText);
+}
+
 static void drawMetricRow(const Metric* m, int x, int y, int w, int h, int index,
                           float displayValue, signed char dir, float dirAlpha,
                           const sensorHistory* hist, size_t metricIdx,
@@ -215,7 +266,7 @@ static void drawMetricRow(const Metric* m, int x, int y, int w, int h, int index
   float unitSize  = imax(8.0f, valueSize / 2 + 1);
 
   // Label and value group get separate width budgets so they never collide
-  int contentWidth = w - 2 * THEME.padding;
+  int contentWidth = w - 32; // chip insets (2*6) + chip padding (2*10)
   float labelMaxWidth = contentWidth * 55 / 100;
   float groupMaxWidth = contentWidth * 42 / 100;
 
@@ -230,16 +281,12 @@ static void drawMetricRow(const Metric* m, int x, int y, int w, int h, int index
                  measureText(unit, unitSize).x;
   }
 
-  // Up/down change indicator: small triangle left of the value
-  float arrowSize = valueSize / 3.0f;
-  int arrowWidth = 0;
-  Color arrowColor = THEME.labelText;
-  if (dir != 0 && dirAlpha > 0.0f && g_showIndicators) {
-    arrowWidth = (int)arrowSize + 6;
-    Color base = dir > 0 ? THEME.upColor : THEME.downColor;
-    arrowColor = (Color){ base.r, base.g, base.b,
-                          (unsigned char)(255 * dirAlpha) };
-  }
+  // Metric chip: an inset sub-card that groups this metric's data
+  int chipX = x + 6, chipY = rowY + 3, chipW = w - 12, chipH = h - 6;
+  DrawRectangleRounded((Rectangle){ (float)chipX, (float)chipY,
+                                    (float)chipW, (float)chipH },
+                       0.15f, 6, THEME.chip);
+  int cx = chipX + 10, cw = chipW - 20; // content area inside the chip
 
   // --- Vertical layout: text line first, sparkline gets the leftover ---
   int textLineH = (int)valueSize + 6;
@@ -250,37 +297,14 @@ static void drawMetricRow(const Metric* m, int x, int y, int w, int h, int index
   int groupH = textLineH + (showSpark ? sparkH + 6 : 0);
   int groupY = rowY + (h - groupH) / 2;
 
-  // Text line: label left, value + unit right
-  int labelY = groupY + (textLineH - (int)labelSize) / 2;
-  int valueY = groupY + (textLineH - (int)valueSize) / 2;
-  drawText(m->name, x + THEME.padding, labelY, labelSize, THEME.labelText);
+  drawLabelValueLine(m->name, valueBuf, unit, cx, groupY, cw, textLineH,
+                     10, valueSize, labelSize, unitSize, dir, dirAlpha);
 
-  int groupX = x + w - THEME.padding - (int)groupWidth;
-  if (arrowWidth > 0) {
-    float ax = (float)(groupX - arrowWidth);
-    float ay = (float)(valueY + (int)valueSize / 2);
-    float half = arrowSize / 2.0f;
-    if (dir > 0) {
-      DrawTriangle((Vector2){ ax, ay + half },
-                   (Vector2){ ax + arrowSize, ay + half },
-                   (Vector2){ ax + half, ay - half }, arrowColor);
-    } else {
-      DrawTriangle((Vector2){ ax + arrowSize, ay - half },
-                   (Vector2){ ax, ay - half },
-                   (Vector2){ ax + half, ay + half }, arrowColor);
-    }
-  }
-
-  drawText(valueBuf, groupX, valueY, valueSize, THEME.valueText);
-  int unitX = groupX + (int)measureText(valueBuf, valueSize).x + 4;
-  int unitY = valueY + (int)(valueSize - unitSize) / 3;
-  drawText(unit, unitX, unitY, unitSize, THEME.labelText);
-
-  // Sparkline: full content width, directly under its metric
+  // Sparkline: full chip width, directly under its metric
   if (showSpark) {
     drawSparkline(hist, metricIdx,
-                  x + THEME.padding, groupY + textLineH + 6,
-                  contentWidth, sparkH);
+                  cx, groupY + textLineH + 6,
+                  cw, sparkH);
   }
 }
 
@@ -491,6 +515,113 @@ static bool drawTabPager(int pageCount, int screenWidth, int screenHeight) {
   return clicked;
 }
 
+// Draws one metric block inside the detail panel: label/value line,
+// a large sparkline, and a min/avg/max stats line.
+static void drawDetailMetricBlock(const Metric* m, const sensorHistory* hist,
+                                  size_t metricIdx, int x, int y, int w, int h,
+                                  float displayValue, signed char dir,
+                                  float dirAlpha) {
+  char valueBuf[32];
+  snprintf(valueBuf, sizeof(valueBuf), "%g", roundTo2(displayValue));
+
+  float valueSize = 24.0f;
+  float labelSize = 14.0f;
+  float unitSize  = 15.0f;
+  int textLineH = (int)valueSize + 8;
+  float statsH = 14.0f;
+
+  // Metric chip: same inset sub-card grouping as in the cards
+  int chipX = x + 6, chipY = y + 3, chipW = w - 12, chipH = h - 6;
+  DrawRectangleRounded((Rectangle){ (float)chipX, (float)chipY,
+                                    (float)chipW, (float)chipH },
+                       0.08f, 6, THEME.chip);
+  int cx = chipX + 14, cw = chipW - 28;
+
+  // Sparkline fills the space between the text line and the stats line
+  float sparkH = (float)(chipH - textLineH - (int)statsH - 16);
+  bool showSpark = sparkH >= 24.0f;
+  if (sparkH > 90.0f) sparkH = 90.0f;
+
+  // Center the whole block vertically
+  int contentH = textLineH + 4 + (showSpark ? (int)sparkH + 6 : 0) +
+                 (int)statsH + 4;
+  int y0 = chipY + (chipH - contentH) / 2;
+
+  drawLabelValueLine(m->name, valueBuf, m->unit, cx, y0, cw, textLineH,
+                     10, valueSize, labelSize, unitSize, dir, dirAlpha);
+
+  int cursor = y0 + textLineH + 4;
+  if (showSpark) {
+    drawSparkline(hist, metricIdx, cx, cursor, cw, (int)sparkH);
+    cursor += (int)sparkH + 6;
+  }
+
+  float min, max, avg;
+  if (sensorHistoryMetricStats(hist, metricIdx, &min, &max, &avg)) {
+    char statsBuf[96];
+    snprintf(statsBuf, sizeof(statsBuf),
+             "min %g  ·  avg %g  ·  max %g", roundTo2(min), roundTo2(avg),
+             roundTo2(max));
+    drawText(statsBuf, cx, cursor, 12, THEME.labelText);
+  }
+}
+
+static void drawDetailPanel(const sensorData* sensors,
+                            const sensorHistory* histories,
+                            int screenWidth, int screenHeight) {
+  const sensorData* d = &sensors[g_detailSensor];
+  const sensorHistory* hist = &histories[g_detailSensor];
+
+  // Dim overlay, then the centered panel
+  DrawRectangle(0, 0, screenWidth, screenHeight, (Color){ 0, 0, 0, 150 });
+
+  float panelW = (float)imin(640, screenWidth - 2 * THEME.padding);
+  float panelH = (float)imin(460, screenHeight - 2 * THEME.padding);
+  Rectangle panel = { (screenWidth - panelW) / 2.0f,
+                      (screenHeight - panelH) / 2.0f, panelW, panelH };
+  g_detailPanelRect = panel;
+  DrawRectangleRounded(panel, 0.05f, 8, THEME.panel);
+
+  // Header: sensor name + id
+  drawText(d->name[0] != '\0' ? d->name : "sensor",
+           (int)panel.x + THEME.padding, (int)panel.y + 14, 18,
+           THEME.titleText);
+  char idBuf[16];
+  snprintf(idBuf, sizeof(idBuf), "#%d", d->id);
+  Vector2 idBounds = measureText(idBuf, 14);
+  drawText(idBuf,
+           (int)(panel.x + panelW - THEME.padding - idBounds.x),
+           (int)panel.y + 17, 14, THEME.labelText);
+
+  int headerBottom = (int)panel.y + 48;
+  DrawLine((int)panel.x + THEME.padding, headerBottom,
+           (int)(panel.x + panelW - THEME.padding), headerBottom,
+           THEME.divider);
+
+  // Metric blocks share the remaining space
+  int metricsTop = headerBottom + 8;
+  int metricsH = (int)(panel.y + panelH) - metricsTop - THEME.padding / 2;
+  if (d->metricCount == 0 || metricsH <= 0) return;
+  int blockH = metricsH / (int)d->metricCount;
+  if (blockH <= 0) return;
+
+  int blockX = (int)panel.x + THEME.padding;
+  int blockW = (int)panelW - 2 * THEME.padding;
+
+  for (size_t i = 0; i < d->metricCount; i++) {
+    size_t idx = (size_t)g_detailSensor * MAX_METRICS + i;
+    float dirAlpha = 0.0f;
+    if (g_dirTimer != NULL && g_dirTimer[idx] > 0.0f && THEME.arrowHoldSeconds > 0.0f) {
+      dirAlpha = g_dirTimer[idx] / THEME.arrowHoldSeconds;
+    }
+    int by = metricsTop + (int)i * blockH;
+    drawDetailMetricBlock(&d->metrics[i], hist, i,
+                          blockX, by, blockW, blockH,
+                          g_display != NULL ? g_display[idx] : d->metrics[i].value,
+                          g_dir != NULL ? g_dir[idx] : 0, dirAlpha);
+  }
+}
+
 void DrawDashboard(const sensorData* sensors, size_t sensorCount,
                    const sensorHistory* histories,
                    int screenWidth, int screenHeight) {
@@ -515,11 +646,22 @@ void DrawDashboard(const sensorData* sensors, size_t sensorCount,
   // --- Settings panel input: gear toggles, outside click / ESC closes ---
   Vector2 mouse = GetMousePosition();
   if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-    if (iconHovered) g_settingsOpen = !g_settingsOpen;
+    if (iconHovered) {
+      g_settingsOpen = !g_settingsOpen;
+      g_detailSensor = -1; // the two modals are mutually exclusive
+    }
     else if (g_settingsOpen && !CheckCollisionPointRec(mouse, g_settingsPanelRect))
       g_settingsOpen = false;
   }
-  if (g_settingsOpen && IsKeyPressed(KEY_ESCAPE)) g_settingsOpen = false;
+  if (IsKeyPressed(KEY_ESCAPE)) {
+    if (g_detailSensor >= 0) g_detailSensor = -1;
+    else g_settingsOpen = false;
+  }
+  // Clicking outside the detail panel closes it (the gear is handled above)
+  if (g_detailSensor >= 0 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+      !iconHovered && !CheckCollisionPointRec(mouse, g_detailPanelRect)) {
+    g_detailSensor = -1;
+  }
 
   const char* timeText = TextFormat("%.1f s", GetTime());
   Vector2 timeBounds = measureText(timeText, 14);
@@ -590,12 +732,23 @@ void DrawDashboard(const sensorData* sensors, size_t sensorCount,
     drawSensorCard(&sensors[i], i,
                    histories != NULL ? &histories[i] : NULL,
                    x, y, cardWidth, cardHeight, scale);
+
+    // Click a card (when no modal is open) to open its detail view
+    if (!g_settingsOpen && g_detailSensor < 0 &&
+        IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+        CheckCollisionPointRec(mouse, (Rectangle){ (float)x, (float)y,
+                                                   (float)cardWidth,
+                                                   (float)cardHeight })) {
+      g_detailSensor = (int)i;
+    }
   }
 
   // Tab pager (only when there is more than one tab)
   if (tabs.pagerVisible) drawTabPager(pageCount, screenWidth, screenHeight);
 
-  // Settings modal renders on top of everything
+  // Detail modal, then settings modal on top of everything
+  if (g_detailSensor >= 0)
+    drawDetailPanel(sensors, histories, screenWidth, screenHeight);
   if (g_settingsOpen) drawSettingsPanel(screenWidth, screenHeight);
 
   EndDrawing();

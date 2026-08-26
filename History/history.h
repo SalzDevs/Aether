@@ -25,6 +25,11 @@ size_t sensorHistorySize(const sensorHistory* h);
 // Returns NULL when the index is out of range.
 const sensorData* sensorHistoryAt(const sensorHistory* h, size_t index);
 
+// Computes min/max/avg of one metric across all stored readings.
+// Returns false when there are no readings or the metric is missing.
+bool sensorHistoryMetricStats(const sensorHistory* h, size_t metricIdx,
+                              float* outMin, float* outMax, float* outAvg);
+
 // Adds a reading; when the history is full, the oldest is dropped.
 void pushSensorReading(sensorHistory* h, sensorData d);
 

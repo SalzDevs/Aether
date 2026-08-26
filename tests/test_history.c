@@ -86,6 +86,44 @@ static void test_at_out_of_range_returns_null(void) {
   destroySensorHistory(&h);
 }
 
+static void test_metric_stats_min_max_avg(void) {
+  sensorHistory h;
+  initSensorHistory(&h, 8);
+  float series[] = { 4.0f, 8.0f, 6.0f };
+  for (int i = 0; i < 3; i++) {
+    sensorData d;
+    initSensorData(&d);
+    addMetric(&d, "level", "%", series[i]);
+    pushSensorReading(&h, d);
+  }
+
+  float min, max, avg;
+  assert(sensorHistoryMetricStats(&h, 0, &min, &max, &avg));
+  assert(min == 4.0f);
+  assert(max == 8.0f);
+  assert(avg == 6.0f);
+  destroySensorHistory(&h);
+}
+
+static void test_metric_stats_empty_history_fails(void) {
+  sensorHistory h;
+  initSensorHistory(&h, 4);
+  float min, max, avg;
+  assert(!sensorHistoryMetricStats(&h, 0, &min, &max, &avg));
+  destroySensorHistory(&h);
+}
+
+static void test_metric_stats_missing_metric_fails(void) {
+  sensorHistory h;
+  initSensorHistory(&h, 4);
+  sensorData d;
+  initSensorData(&d); // no metrics at all
+  pushSensorReading(&h, d);
+  float min, max, avg;
+  assert(!sensorHistoryMetricStats(&h, 0, &min, &max, &avg));
+  destroySensorHistory(&h);
+}
+
 static void test_destroy_resets_state(void) {
   sensorHistory h;
   initSensorHistory(&h, 2);
@@ -117,6 +155,9 @@ int main(void) {
   test_full_history_drops_oldest();
   test_ring_wraps_many_times();
   test_at_out_of_range_returns_null();
+  test_metric_stats_min_max_avg();
+  test_metric_stats_empty_history_fails();
+  test_metric_stats_missing_metric_fails();
   test_destroy_resets_state();
   test_zero_capacity_is_clamped_to_one();
   printf("All history tests passed\n");
