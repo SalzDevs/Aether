@@ -3,16 +3,34 @@
   <img src="logo.png" width="180" alt="logo">
 </p>
 
+[![Aether CI](https://github.com/SalzDevs/Aether/actions/workflows/ci.yml/badge.svg)](https://github.com/SalzDevs/Aether/actions/workflows/ci.yml)
+
 Aether is a small C application that simulates sensor readings and displays them in a real-time Raylib dashboard.
+
+<p align="center">
+  <img src="docs/screenshot.png" width="720" alt="Aether dashboard">
+</p>
 
 ## Features
 
-- Load sensor data from YAML configuration
-- Simulate changing sensor values
-- Schedule periodic sensor updates
-- Store recent readings in per-sensor history buffers
-- Display sensor values with Raylib
-- Run unit tests for configuration, history, scheduler, and sensor modules
+- Load any number of sensors from a YAML config, each with an arbitrary
+  list of named metrics carrying units (`temperature (C)`, `pressure (hPa)`, ...)
+- Adaptive card grid with sparklines, animated values, and up/down
+  change indicators
+- Tabbed navigation: a tab holds as many cards as fit the window;
+  overflow goes to numbered tabs (`1 2 ... N`), clickable and bound to
+  `Alt/Cmd + 1..9`
+- Settings modal to toggle trend lines, value animation, and change
+  indicators at runtime
+- Fixed-slot task scheduler decoupled from data handling
+- Bounded per-sensor reading history (ring buffers)
+- Unit tests for configuration, history, scheduler, and sensor modules
+
+## Demo
+
+<p align="center">
+  <img src="docs/demo.gif" width="720" alt="Aether demo">
+</p>
 
 ## Requirements
 
@@ -107,12 +125,23 @@ Each sensor requires:
 Note: a `%` unit must be quoted (`"%"`) because libyaml reserves the percent sign.
 
 
+## Controls
+
+| Input | Action |
+| --- | --- |
+| Click the cogwheel (top right) | Open/close the settings modal |
+| Click a numbered tab (bottom) | Jump to that tab |
+| `Alt/Cmd` + `1..9` | Jump directly to tab N |
+| `←` / `→` | Previous / next tab |
+| `Esc` | Close the settings modal |
+
 ## Project structure
 
 ```text
 .
 ├── assets/fonts/ Bundled font (JetBrains Mono, SIL OFL)
 ├── config/       Sensor configuration loading and YAML data
+├── docs/         Screenshots and demo media
 ├── History/      Bounded per-sensor reading history (ring buffer)
 ├── scheduler/    Periodic task scheduling
 ├── sensor/       Sensor data types and simulation
