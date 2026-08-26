@@ -17,6 +17,9 @@ const DashboardTheme THEME = {
     .padding        = 16,
     .cardGap        = 12,
     .topBarHeight   = 34,
+    .bottomBarHeight = 34,
+    .minCardWidth   = 230.0f,
+    .minCardHeight  = 160.0f,
     .fontAtlasSize  = 64.0f,
     .iconColor      = { 145, 152, 168, 255 },
     .iconHoverColor = { 235, 240, 250, 255 },
@@ -43,6 +46,9 @@ static bool g_showSparklines = true;     // "Trend lines"
 static bool g_animateValues = true;      // "Animated values"
 static bool g_showIndicators = true;     // "Change indicators"
 static Rectangle g_settingsPanelRect = { 0 };
+
+// --- Tab pagination (pure UI state) ---
+static int g_currentPage = 0;
 
 void InitDashboard(const sensorData* sensors, size_t sensorCount) {
   // ESC must close the settings panel, not quit the app
@@ -426,6 +432,90 @@ static void drawSettingsPanel(int screenWidth, int screenHeight) {
   g_settingsPanelRect = panel;
 }
 
+// Builds the visible tab sequence with collapsing:
+// first + last always, current +-1, "..." markers (-1) in larger gaps.
+// Returns how many slots were filled (<= 7).
+static int buildPageList(int pageCount, int current, int* out, int outMax) {
+  int n = 0;
+  if (pageCount <= outMax) {
+    for (int p = 1; p <= pageCount; p++) out[n++] = p;
+    return n;
+  }
+
+  int candidates[5] = { 1, current - 1, current, current + 1, pageCount };
+  int prev = 0;
+  for (int i = 0; i < 5; i++) {
+    int p = candidates[i];
+    if (p < 1 || p > pageCount) continue;
+    if (n > 0 && p == prev) continue;      // dedupe (sorted candidates)
+    if (n > 0 && p - prev > 1 && n < outMax - 1) out[n++] = -1; // gap marker
+    if (n >= outMax) break;
+    out[n++] = p;
+    prev = p;
+  }
+  // guarantee the last page made it (drop a gap marker if needed)
+  while (n > 0 && out[n - 1] != pageCount) {
+    if (out[n - 1] == -1) { n--; continue; }
+    if (n < outMax) { out[n++] = pageCount; break; }
+    n -= 2; // drop marker + neighbor to make room
+  }
+  return n;
+}
+
+// Draws the bottom tab pager; returns true when a tab was clicked.
+static bool drawTabPager(int pageCount, int screenWidth, int screenHeight) {
+  const float circleD = 24.0f;
+  const float gap = 10.0f;
+  const float dotsW = 20.0f; // width of a "..." slot
+
+  int seq[9];
+  int n = buildPageList(pageCount, g_currentPage + 1, seq, 9);
+
+  // total width to center the strip
+  float total = 0.0f;
+  for (int i = 0; i < n; i++) total += (seq[i] == -1) ? dotsW : circleD;
+  total += gap * (float)(n - 1);
+
+  float x = ((float)screenWidth - total) / 2.0f;
+  float cy = (float)screenHeight - THEME.bottomBarHeight / 2.0f;
+  Vector2 mouse = GetMousePosition();
+  bool clicked = false;
+
+  for (int i = 0; i < n; i++) {
+    if (seq[i] == -1) {
+      drawText("...", (int)(x + dotsW / 2 - 6), (int)(cy - 7), 13,
+               THEME.labelText);
+      x += dotsW + gap;
+      continue;
+    }
+
+    int page = seq[i]; // 1-based
+    bool active = page == g_currentPage + 1;
+    Vector2 center = { x + circleD / 2.0f, cy };
+    bool hover = !active && CheckCollisionPointCircle(mouse, center, circleD / 2.0f + 3.0f);
+
+    Color fill = active ? THEME.valueText
+                        : (hover ? THEME.panelHoverColor : THEME.panel);
+    Color number = active ? THEME.background
+                          : (hover ? THEME.titleText : THEME.labelText);
+    DrawCircleV(center, circleD / 2.0f, fill);
+
+    char num[8];
+    snprintf(num, sizeof(num), "%d", page);
+    Vector2 bounds = measureText(num, 12);
+    drawText(num, (int)(center.x - bounds.x / 2.0f),
+             (int)(center.y - bounds.y / 2.0f), 12, number);
+
+    if (!active && hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+      g_currentPage = page - 1;
+      clicked = true;
+    }
+
+    x += circleD + gap;
+  }
+  return clicked;
+}
+
 void DrawDashboard(const sensorData* sensors, size_t sensorCount,
                    const sensorHistory* histories,
                    int screenWidth, int screenHeight) {
@@ -474,14 +564,42 @@ void DrawDashboard(const sensorData* sensors, size_t sensorCount,
     return;
   }
 
-  // Adaptive grid: roughly square layout (cols ~= sqrt(count))
-  int cols = 1;
-  while (cols * cols < (int)count) cols++;
-  int rows = ((int)count + cols - 1) / cols;
+  // Tab layout: fit as many minimum-size cards as possible; overflow
+  // goes to the next tab (page).
+  int availW = screenWidth - 2 * THEME.padding;
+  int availH = screenHeight - THEME.topBarHeight - THEME.padding;
 
-  int availW = screenWidth - 2 * THEME.padding - (cols - 1) * THEME.cardGap;
-  int availH = screenHeight - THEME.topBarHeight - THEME.padding
-               - (rows - 1) * THEME.cardGap;
+  int cols = imax(1, (int)(availW / THEME.minCardWidth));
+  int rowsNoPager = imax(1, (int)(availH / THEME.minCardHeight));
+  int perTabNoPager = cols * rowsNoPager;
+
+  // Reserve the bottom strip only when tabs are actually needed
+  bool pagerNeeded = (int)count > perTabNoPager;
+  int rows = pagerNeeded
+      ? imax(1, (int)((availH - THEME.bottomBarHeight) / THEME.minCardHeight))
+      : rowsNoPager;
+  int perTab = cols * rows;
+  int pageCount = ((int)count + perTab - 1) / perTab;
+
+  if (g_currentPage >= pageCount) g_currentPage = pageCount - 1;
+  if (g_currentPage < 0) g_currentPage = 0;
+
+  // Keyboard: Alt/Cmd + 1..9 jumps to a tab
+  bool modifierDown = IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT) ||
+                      IsKeyDown(KEY_LEFT_SUPER) || IsKeyDown(KEY_RIGHT_SUPER);
+  if (modifierDown) {
+    const int digitKeys[] = { KEY_ONE, KEY_TWO, KEY_THREE, KEY_FOUR, KEY_FIVE,
+                              KEY_SIX, KEY_SEVEN, KEY_EIGHT, KEY_NINE };
+    for (int k = 0; k < 9; k++) {
+      if (IsKeyPressed(digitKeys[k]) && k < pageCount) g_currentPage = k;
+    }
+  }
+  // Arrow keys flip pages
+  if (IsKeyPressed(KEY_RIGHT)) g_currentPage++;
+  if (IsKeyPressed(KEY_LEFT)) g_currentPage--;
+  g_currentPage = imin(imax(g_currentPage, 0), pageCount - 1);
+
+  availH -= pagerNeeded ? THEME.bottomBarHeight : 0;
   int cardWidth = availW / cols;
   int cardHeight = availH / rows;
   if (cardWidth <= 0 || cardHeight <= 0) {
@@ -489,17 +607,23 @@ void DrawDashboard(const sensorData* sensors, size_t sensorCount,
     return;
   }
 
-  for (size_t i = 0; i < count; i++) {
-    int col = (int)i % cols;
-    int row = (int)i / cols;
+  int start = g_currentPage * perTab;
+  int end = imin((int)count, start + perTab);
+  // Typography grows with card size (reference: ~220px tall cards)
+  float scale = imax(100, imin(200, (cardHeight * 100) / 220)) / 100.0f;
+
+  for (int i = start; i < end; i++) {
+    int col = (i - start) % cols;
+    int row = (i - start) / cols;
     int x = THEME.padding + col * (cardWidth + THEME.cardGap);
     int y = THEME.topBarHeight + row * (cardHeight + THEME.cardGap);
-    // Typography grows with card size (reference: ~220px tall cards)
-    float scale = imax(100, imin(200, (cardHeight * 100) / 220)) / 100.0f;
     drawSensorCard(&sensors[i], i,
                    histories != NULL ? &histories[i] : NULL,
                    x, y, cardWidth, cardHeight, scale);
   }
+
+  // Tab pager (only when there is more than one tab)
+  if (pagerNeeded) drawTabPager(pageCount, screenWidth, screenHeight);
 
   // Settings modal renders on top of everything
   if (g_settingsOpen) drawSettingsPanel(screenWidth, screenHeight);

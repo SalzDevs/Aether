@@ -21,6 +21,12 @@ typedef struct {
   int padding;      // outer margin + inner card padding
   int cardGap;      // space between cards
   int topBarHeight; // reserved strip above the grid
+  int bottomBarHeight; // reserved strip below the grid (tab pager)
+
+  // Tab layout: minimum comfortable card size; a tab holds as many
+  // of these as fit in the window
+  float minCardWidth;
+  float minCardHeight;
 
   // Typography (base atlas size the font is loaded at)
   float fontAtlasSize;
