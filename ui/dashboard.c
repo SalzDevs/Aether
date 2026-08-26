@@ -47,11 +47,9 @@ static bool g_settingsOpen = false;
 static bool g_showSparklines = true;     // "Trend lines"
 static bool g_animateValues = true;      // "Animated values"
 static bool g_showIndicators = true;     // "Change indicators"
-static Rectangle g_settingsPanelRect = { 0 };
 
 // --- Detail view (pure UI state; index into the registry, -1 = closed) ---
 static int g_detailSensor = -1;
-static Rectangle g_detailPanelRect = { 0 };
 
 // --- Tab pagination (pure UI state) ---
 static int g_currentPage = 0;
@@ -451,7 +449,6 @@ static void drawSettingsPanel(int screenWidth, int screenHeight) {
   drawSettingsRow("Change indicators", &g_showIndicators, row);
 
   // remember the panel rect for the outside-click check
-  g_settingsPanelRect = panel;
 }
 
 // Builds the visible tab sequence with collapsing:
@@ -577,7 +574,6 @@ static void drawDetailPanel(const sensorData* sensors,
   float panelH = (float)imin(460, screenHeight - 2 * THEME.padding);
   Rectangle panel = { (screenWidth - panelW) / 2.0f,
                       (screenHeight - panelH) / 2.0f, panelW, panelH };
-  g_detailPanelRect = panel;
   DrawRectangleRounded(panel, 0.05f, 8, THEME.panel);
 
   // Header: sensor name + id
@@ -641,24 +637,18 @@ void DrawDashboard(const sensorData* sensors, size_t sensorCount,
   };
   bool iconHovered = CheckCollisionPointRec(GetMousePosition(), iconHit);
 
-  // --- Settings panel input: gear toggles, outside click / ESC closes ---
+  // --- Settings panel input: the gear toggles it ---
   Vector2 mouse = GetMousePosition();
   if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
     if (iconHovered) {
       g_settingsOpen = !g_settingsOpen;
       g_detailSensor = -1; // the two modals are mutually exclusive
     }
-    else if (g_settingsOpen && !CheckCollisionPointRec(mouse, g_settingsPanelRect))
-      g_settingsOpen = false;
   }
+  // Modals close only via ESC
   if (IsKeyPressed(KEY_ESCAPE)) {
     if (g_detailSensor >= 0) g_detailSensor = -1;
-    else g_settingsOpen = false;
-  }
-  // Clicking outside the detail panel closes it (the gear is handled above)
-  if (g_detailSensor >= 0 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
-      !iconHovered && !CheckCollisionPointRec(mouse, g_detailPanelRect)) {
-    g_detailSensor = -1;
+    else if (g_settingsOpen) g_settingsOpen = false;
   }
 
   const char* timeText = TextFormat("%.1f s", GetTime());

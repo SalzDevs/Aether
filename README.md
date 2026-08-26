@@ -130,10 +130,11 @@ Note: a `%` unit must be quoted (`"%"`) because libyaml reserves the percent sig
 | Input | Action |
 | --- | --- |
 | Click the cogwheel (top right) | Open/close the settings modal |
+| Click a card | Open that sensor's detail view |
 | Click a numbered tab (bottom) | Jump to that tab |
 | `Alt/Cmd` + `1..9` | Jump directly to tab N |
 | `←` / `→` | Previous / next tab |
-| `Esc` | Close the settings modal |
+| `Esc` | Close the detail view or settings modal |
 
 ## Project structure
 
