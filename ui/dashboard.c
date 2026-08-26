@@ -1,5 +1,6 @@
 #include "dashboard.h"
 #include "theme.h"
+#include "layout.h"
 #include "raylib.h"
 #include <math.h>
 #include <stdio.h>
@@ -116,8 +117,7 @@ static void updateAnimations(const sensorData* sensors, float dt) {
 
 // Rounds to two decimals so animated values render compactly.
 static float roundTo2(float v) {
-  long scaled = (long)(v * 100.0f + (v >= 0.0f ? 0.5f : -0.5f));
-  return (float)scaled / 100.0f;
+  return layoutRound2(v);
 }
 
 static int imin(int a, int b) { return a < b ? a : b; }
@@ -165,14 +165,13 @@ static int drawSparkline(const sensorHistory* hist, size_t metricIdx,
 
   // Gather the series and its range
   float values[SPARK_MAX_POINTS];
-  float min = 0.0f, max = 0.0f;
   for (size_t i = 0; i < count; i++) {
     const sensorData* reading = sensorHistoryAt(hist, i);
     if (metricIdx >= reading->metricCount) return 0;
     values[i] = reading->metrics[metricIdx].value;
-    if (i == 0 || values[i] < min) min = values[i];
-    if (i == 0 || values[i] > max) max = values[i];
   }
+  float min = 0.0f, max = 0.0f;
+  layoutMinMax(values, count, &min, &max);
 
   // Vertical layout: small margins inside the row
   float top = (float)y + 4.0f;
@@ -182,9 +181,8 @@ static int drawSparkline(const sensorHistory* hist, size_t metricIdx,
   Vector2 points[SPARK_MAX_POINTS];
   float step = (float)maxW / (float)(count - 1);
   for (size_t i = 0; i < count; i++) {
-    float t = (max > min) ? (values[i] - min) / (max - min) : 0.5f;
     points[i] = (Vector2){ (float)x + step * (float)i,
-                           bottom - t * (bottom - top) };
+                           layoutMapRange(values[i], min, max, bottom, top) };
   }
 
   Color lineColor = { THEME.valueText.r, THEME.valueText.g,
@@ -436,30 +434,7 @@ static void drawSettingsPanel(int screenWidth, int screenHeight) {
 // first + last always, current +-1, "..." markers (-1) in larger gaps.
 // Returns how many slots were filled (<= 7).
 static int buildPageList(int pageCount, int current, int* out, int outMax) {
-  int n = 0;
-  if (pageCount <= outMax) {
-    for (int p = 1; p <= pageCount; p++) out[n++] = p;
-    return n;
-  }
-
-  int candidates[5] = { 1, current - 1, current, current + 1, pageCount };
-  int prev = 0;
-  for (int i = 0; i < 5; i++) {
-    int p = candidates[i];
-    if (p < 1 || p > pageCount) continue;
-    if (n > 0 && p == prev) continue;      // dedupe (sorted candidates)
-    if (n > 0 && p - prev > 1 && n < outMax - 1) out[n++] = -1; // gap marker
-    if (n >= outMax) break;
-    out[n++] = p;
-    prev = p;
-  }
-  // guarantee the last page made it (drop a gap marker if needed)
-  while (n > 0 && out[n - 1] != pageCount) {
-    if (out[n - 1] == -1) { n--; continue; }
-    if (n < outMax) { out[n++] = pageCount; break; }
-    n -= 2; // drop marker + neighbor to make room
-  }
-  return n;
+  return layoutPageList(pageCount, current, out, outMax);
 }
 
 // Draws the bottom tab pager; returns true when a tab was clicked.
@@ -569,17 +544,12 @@ void DrawDashboard(const sensorData* sensors, size_t sensorCount,
   int availW = screenWidth - 2 * THEME.padding;
   int availH = screenHeight - THEME.topBarHeight - THEME.padding;
 
-  int cols = imax(1, (int)(availW / THEME.minCardWidth));
-  int rowsNoPager = imax(1, (int)(availH / THEME.minCardHeight));
-  int perTabNoPager = cols * rowsNoPager;
-
-  // Reserve the bottom strip only when tabs are actually needed
-  bool pagerNeeded = (int)count > perTabNoPager;
-  int rows = pagerNeeded
-      ? imax(1, (int)((availH - THEME.bottomBarHeight) / THEME.minCardHeight))
-      : rowsNoPager;
-  int perTab = cols * rows;
-  int pageCount = ((int)count + perTab - 1) / perTab;
+  TabLayout tabs = layoutTabs(availW, availH,
+                              THEME.minCardWidth, THEME.minCardHeight, count);
+  int cols = tabs.cols;
+  int rows = tabs.rows;
+  int perTab = tabs.perTab;
+  int pageCount = tabs.pageCount;
 
   if (g_currentPage >= pageCount) g_currentPage = pageCount - 1;
   if (g_currentPage < 0) g_currentPage = 0;
@@ -599,7 +569,7 @@ void DrawDashboard(const sensorData* sensors, size_t sensorCount,
   if (IsKeyPressed(KEY_LEFT)) g_currentPage--;
   g_currentPage = imin(imax(g_currentPage, 0), pageCount - 1);
 
-  availH -= pagerNeeded ? THEME.bottomBarHeight : 0;
+  availH -= tabs.bottomReserved;
   int cardWidth = availW / cols;
   int cardHeight = availH / rows;
   if (cardWidth <= 0 || cardHeight <= 0) {
@@ -623,7 +593,7 @@ void DrawDashboard(const sensorData* sensors, size_t sensorCount,
   }
 
   // Tab pager (only when there is more than one tab)
-  if (pagerNeeded) drawTabPager(pageCount, screenWidth, screenHeight);
+  if (tabs.pagerVisible) drawTabPager(pageCount, screenWidth, screenHeight);
 
   // Settings modal renders on top of everything
   if (g_settingsOpen) drawSettingsPanel(screenWidth, screenHeight);

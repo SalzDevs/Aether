@@ -201,56 +201,80 @@ static sensorData* fileToSensors(const char* fileName, size_t* count) {
     // root mapping: { sensors: [ ... ] }
     if (!expectEvent(&parser, YAML_MAPPING_START_EVENT)) break;
 
-    char rootKey[32];
-    if (!readScalarInto(&parser, rootKey, sizeof(rootKey))) break;
-    if (strcmp(rootKey, "sensors") != 0) break;
-    if (!expectEvent(&parser, YAML_SEQUENCE_START_EVENT)) break;
-
-    bool sequenceOk = true;
+    // root mapping: tolerate unknown keys, act on "sensors"
+    bool foundSensors = false;
+    bool rootOk = true;
     while (true) {
       yaml_event_t event;
-      if (!yaml_parser_parse(&parser, &event)) { sequenceOk = false; break; }
-
-      if (event.type == YAML_SEQUENCE_END_EVENT) {
+      if (!yaml_parser_parse(&parser, &event)) { rootOk = false; break; }
+      if (event.type == YAML_MAPPING_END_EVENT) {
         yaml_event_delete(&event);
         break;
       }
-      if (event.type != YAML_MAPPING_START_EVENT) {
+      if (event.type != YAML_SCALAR_EVENT) {
         yaml_event_delete(&event);
-        sequenceOk = false;
+        rootOk = false;
         break;
       }
+      char rootKey[32];
+      snprintf(rootKey, sizeof(rootKey), "%s",
+               (const char*)event.data.scalar.value);
       yaml_event_delete(&event);
 
-      if (*count == capacity) {
-        // grow dynamically: the registry has no hard sensor limit
-        capacity *= 2;
-        sensorData* grown = realloc(sensors, capacity * sizeof(sensorData));
-        if (grown == NULL) { sequenceOk = false; break; }
-        sensors = grown;
-      }
+      if (strcmp(rootKey, "sensors") == 0 && !foundSensors) {
+        if (!expectEvent(&parser, YAML_SEQUENCE_START_EVENT)) { rootOk = false; break; }
 
-      SensorSpec spec;
-      if (!parseSensorBody(&parser, &spec)) {
-        sequenceOk = false;
-        break;
-      }
-      if (!spec.hasId) continue; // a sensor without an id is not usable
+        bool sequenceOk = true;
+        while (true) {
+          yaml_event_t entry;
+          if (!yaml_parser_parse(&parser, &entry)) { sequenceOk = false; break; }
 
-      sensorData* s = &sensors[*count];
-      initSensorData(s);
-      s->id = spec.id;
-      snprintf(s->name, sizeof(s->name), "%s", spec.name);
+          if (entry.type == YAML_SEQUENCE_END_EVENT) {
+            yaml_event_delete(&entry);
+            break;
+          }
+          if (entry.type != YAML_MAPPING_START_EVENT) {
+            yaml_event_delete(&entry);
+            sequenceOk = false;
+            break;
+          }
+          yaml_event_delete(&entry);
 
-      for (size_t i = 0; i < spec.metricCount; i++) {
-        addMetric(s, spec.metrics[i].name, spec.metrics[i].unit,
-                  spec.metrics[i].value);
+          if (*count == capacity) {
+            // grow dynamically: the registry has no hard sensor limit
+            capacity *= 2;
+            sensorData* grown = realloc(sensors, capacity * sizeof(sensorData));
+            if (grown == NULL) { sequenceOk = false; break; }
+            sensors = grown;
+          }
+
+          SensorSpec spec;
+          if (!parseSensorBody(&parser, &spec)) {
+            sequenceOk = false;
+            break;
+          }
+          if (!spec.hasId) continue; // a sensor without an id is not usable
+
+          sensorData* s = &sensors[*count];
+          initSensorData(s);
+          s->id = spec.id;
+          snprintf(s->name, sizeof(s->name), "%s", spec.name);
+
+          for (size_t i = 0; i < spec.metricCount; i++) {
+            addMetric(s, spec.metrics[i].name, spec.metrics[i].unit,
+                      spec.metrics[i].value);
+          }
+          (*count)++;
+        }
+
+        if (!sequenceOk) { rootOk = false; break; }
+        foundSensors = true;
+      } else {
+        if (!skipNode(&parser)) { rootOk = false; break; }
       }
-      (*count)++;
     }
 
-    if (!sequenceOk) break;
-    if (!expectEvent(&parser, YAML_MAPPING_END_EVENT)) break;
+    if (!rootOk || !foundSensors) break;
     if (!expectEvent(&parser, YAML_DOCUMENT_END_EVENT)) break;
     if (!expectEvent(&parser, YAML_STREAM_END_EVENT)) break;
 
