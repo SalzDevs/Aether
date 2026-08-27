@@ -637,19 +637,20 @@ void DrawDashboard(const sensorData* sensors, size_t sensorCount,
   };
   bool iconHovered = CheckCollisionPointRec(GetMousePosition(), iconHit);
 
-  // --- Settings panel input: the gear toggles it ---
-  Vector2 mouse = GetMousePosition();
-  if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-    if (iconHovered) {
-      g_settingsOpen = !g_settingsOpen;
-      g_detailSensor = -1; // the two modals are mutually exclusive
-    }
-  }
-  // Modals close only via ESC
-  if (IsKeyPressed(KEY_ESCAPE)) {
-    if (g_detailSensor >= 0) g_detailSensor = -1;
-    else if (g_settingsOpen) g_settingsOpen = false;
-  }
+	// --- Settings panel input: gear click or S key toggles it ---
+	Vector2 mouse = GetMousePosition();
+	bool toggleSettings = (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && iconHovered) ||
+	                      IsKeyPressed(KEY_S);
+	if (toggleSettings) {
+		g_settingsOpen = !g_settingsOpen;
+		g_detailSensor = -1; // the two modals are mutually exclusive
+	}
+
+	// Modals close only via ESC
+	if (IsKeyPressed(KEY_ESCAPE)) {
+		if (g_detailSensor >= 0) g_detailSensor = -1;
+		else if (g_settingsOpen) g_settingsOpen = false;
+	}
 
   const char* timeText = TextFormat("%.1f s", GetTime());
   Vector2 timeBounds = measureText(timeText, 14);
