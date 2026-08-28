@@ -76,14 +76,26 @@ const DashboardTheme THEME_PRESETS[] = {
 
 const int THEME_PRESET_COUNT = sizeof(THEME_PRESETS)/sizeof(THEME);
 
-static int g_themeIndex = 0; //current theme index
+static Settings g_settings = {
+  .theme = 0,
+  .showSparklines = true,
+  .animateValues = true,
+  .showIndicators = true,
+};
 
 void ApplyThemePreset(int index) {
   if (index < 0 || index >=THEME_PRESET_COUNT) {
     return;
   } 
-  g_themeIndex = index;
+  g_settings.theme = index;
   THEME = THEME_PRESETS[index];
+}
+
+void InitSettings(const char* path) {
+  Settings s;
+  LoadSettings(path, &s);          // falls back to defaults if file missing/invalid
+  g_settings = s;
+  ApplyThemePreset(g_settings.theme);
 }
 
 
@@ -99,9 +111,7 @@ static size_t g_sensorCount = 0;
 
 // --- Settings panel (pure UI state) ---
 static bool g_settingsOpen = false;
-static bool g_showSparklines = true;     // "Trend lines"
-static bool g_animateValues = true;      // "Animated values"
-static bool g_showIndicators = true;     // "Change indicators"
+
 
 // --- Detail view (pure UI state; index into the registry, -1 = closed) ---
 static int g_detailSensor = -1;
@@ -165,13 +175,13 @@ static void updateAnimations(const sensorData* sensors, float dt) {
       float target = sensors[s].metrics[m].value;
 
       // With animations off, displayed values snap to the readings
-      g_display[idx] = g_animateValues
+      g_display[idx] = g_settings.animateValues
           ? g_display[idx] + (target - g_display[idx]) * alpha
           : target;
 
       if (target != g_prev[idx]) {
         g_dir[idx] = target > g_prev[idx] ? 1 : -1;
-        g_dirTimer[idx] = g_showIndicators ? THEME.arrowHoldSeconds : 0.0f;
+        g_dirTimer[idx] = g_settings.showIndicators ? THEME.arrowHoldSeconds : 0.0f;
         g_prev[idx] = target;
       }
       if (g_dirTimer[idx] > 0.0f) g_dirTimer[idx] -= dt;
@@ -276,7 +286,7 @@ static void drawLabelValueLine(const char* label, const char* valueBuf,
   drawText(label, x + pad, labelY, labelSize, THEME.labelText);
 
   float arrowSize = valueSize / 3.0f;
-  if (dir != 0 && dirAlpha > 0.0f && g_showIndicators) {
+  if (dir != 0 && dirAlpha > 0.0f && g_settings.showIndicators) {
     Color base = dir > 0 ? THEME.upColor : THEME.downColor;
     Color arrowColor = (Color){ base.r, base.g, base.b,
                                 (unsigned char)(255 * dirAlpha) };
@@ -343,7 +353,7 @@ static void drawMetricRow(const Metric* m, int x, int y, int w, int h, int index
 
   // --- Vertical layout: text line first, sparkline gets the leftover ---
   int textLineH = (int)valueSize + 6;
-  bool sparkWanted = g_showSparklines && hist != NULL;
+  bool sparkWanted = g_settings.showSparklines && hist != NULL;
   int sparkH = sparkWanted ? imin(h - textLineH - 6, (int)(26 * scale)) : 0;
   bool showSpark = sparkH >= 10;
 
@@ -493,14 +503,14 @@ static void drawThemeSwatcher(Rectangle area) {
       Rectangle sw = {x0 + (size + gap) * (float)i, y, size, size};
       DrawRectangleRounded(sw, 0.25f, 6, THEME_PRESETS[i].valueText);
 
-      if (i==g_themeIndex) {
+      if (i == g_settings.theme) {
         Rectangle ring = {sw.x - 3, sw.y - 3, size + 6, size + 6};
         DrawRectangleRoundedLines(ring, 0.25f, 6, THEME.titleText);
       }
 
       if (pressed && CheckCollisionPointRec(mouse,sw)) {
-        SaveSettings(AETHER_SETTINGS_FILE, i);
         ApplyThemePreset(i);
+        SaveSettings(AETHER_SETTINGS_FILE, &g_settings);
       }
   }
 }
@@ -525,12 +535,14 @@ static void drawSettingsPanel(int screenWidth, int screenHeight) {
            THEME.divider);
 
   Rectangle row = { panel.x + 4, panel.y + headerH, panelW - 8, rowH };
-  drawSettingsRow("Trend lines", &g_showSparklines, row);
+  bool changed = false;
+  changed |= drawSettingsRow("Trend lines", &g_settings.showSparklines, row);
   row.y += rowH;
-  drawSettingsRow("Animated values", &g_animateValues, row);
+  changed |= drawSettingsRow("Animated values", &g_settings.animateValues, row);
   row.y += rowH;
-  drawSettingsRow("Change indicators", &g_showIndicators, row);
+  changed |= drawSettingsRow("Change indicators", &g_settings.showIndicators, row);
   row.y += rowH;
+  if (changed) SaveSettings(AETHER_SETTINGS_FILE, &g_settings);
   DrawLine((int)panel.x + THEME.padding, (int)row.y,
            (int)(panel.x + panelW - THEME.padding), (int)row.y,
            THEME.divider);

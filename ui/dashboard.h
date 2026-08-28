@@ -10,6 +10,10 @@
 // The registry is used to seed displayed values.
 void InitDashboard(const sensorData* sensors, size_t sensorCount);
 
+// Loads persisted settings from the given file and applies them (theme + toggles).
+// Falls back to defaults when the file is missing or invalid.
+void InitSettings(const char* path);
+
 // Releases dashboard resources. Call before CloseWindow.
 void UnloadDashboard(void);
 

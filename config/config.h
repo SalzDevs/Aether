@@ -12,10 +12,20 @@ typedef enum {
   CONFIG_ERROR
 } configStatus;
 
+typedef struct {
+  int theme;
+  
+  bool showSparklines;
+  
+  bool animateValues;
+
+  bool showIndicators;
+} Settings;
+
 bool LoadSensorConfig(const char* fileName, size_t* count, sensorData **dt);
 
-bool LoadSettings(const char* fileName, int* themeOut);
+bool LoadSettings(const char* fileName, Settings* s);
 
-bool SaveSettings(const char* fileName, int theme);
+bool SaveSettings(const char* fileName, const Settings* s);
 
 #endif

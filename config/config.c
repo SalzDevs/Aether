@@ -31,6 +31,16 @@ static bool expectEvent(yaml_parser_t* parser, yaml_event_type_t type) {
   return ok;
 }
 
+static bool readScalarInto(yaml_parser_t* parser, char* out, size_t outSize);
+static bool readBool(yaml_parser_t* parser, bool* out) {
+  char buf[64];
+  if (!readScalarInto(parser, buf, sizeof(buf))) return false;
+  if (strcmp(buf, "true") == 0 || strcmp(buf, "1") == 0)       *out = true;
+  else if (strcmp(buf, "false") == 0 || strcmp(buf, "0") == 0) *out = false;
+  else return false;   // not a recognized boolean -> caller treats as parse error
+  return true;
+}
+
 // Reads the current scalar value into out (truncating safely).
 static bool readScalarInto(yaml_parser_t* parser, char* out, size_t outSize) {
   yaml_event_t event;
@@ -299,7 +309,11 @@ bool LoadSensorConfig(const char *fileName, size_t *count, sensorData **out) {
   return true;
 }
 
-bool LoadSettings(const char* fileName, int* outTheme) {
+bool LoadSettings(const char* fileName, Settings* out) {
+  // start from defaults so missing keys fall back gracefully
+  *out = (Settings){ .theme = 0, .showSparklines = true,
+                     .animateValues = true, .showIndicators = true };
+
   FILE* fptr = fopen(fileName, "r");
   if (fptr == NULL) return false;
 
@@ -307,8 +321,7 @@ bool LoadSettings(const char* fileName, int* outTheme) {
   if (!yaml_parser_initialize(&parser)) { fclose(fptr); return false; }
   yaml_parser_set_input_file(&parser, fptr);
 
-  bool ok = false, foundTheme = false;
-  int theme = 0;
+  bool ok = false;
 
   do {
     if (!expectEvent(&parser, YAML_STREAM_START_EVENT)) break;
@@ -331,8 +344,13 @@ bool LoadSettings(const char* fileName, int* outTheme) {
       yaml_event_delete(&event);
 
       if (strcmp(key, "theme") == 0) {
-        if (!readInt(&parser, &theme)) break;
-        foundTheme = true;
+        if (!readInt(&parser, &out->theme)) break;
+      } else if (strcmp(key, "trend_lines") == 0) {
+        if (!readBool(&parser, &out->showSparklines)) break;
+      } else if (strcmp(key, "animated_values") == 0) {
+        if (!readBool(&parser, &out->animateValues)) break;
+      } else if (strcmp(key, "change_indicators") == 0) {
+        if (!readBool(&parser, &out->showIndicators)) break;
       } else {
         if (!skipNode(&parser)) break;   // tolerate unknown keys
       }
@@ -340,18 +358,17 @@ bool LoadSettings(const char* fileName, int* outTheme) {
 
     if (!expectEvent(&parser, YAML_DOCUMENT_END_EVENT)) break;
     if (!expectEvent(&parser, YAML_STREAM_END_EVENT)) break;
-    ok = foundTheme;
+    ok = true;
   } while (false);
 
   yaml_parser_delete(&parser);
   fclose(fptr);
 
-  if (ok) *outTheme = theme;
   return ok;
 }
 
 
-bool SaveSettings(const char* fileName, int theme) {
+bool SaveSettings(const char* fileName, const Settings* s) {
   FILE* f = fopen(fileName, "w");
   if (f == NULL) return false;
 
@@ -362,7 +379,6 @@ bool SaveSettings(const char* fileName, int theme) {
   bool ok = true;
   yaml_event_t e;
   char buf[16];
-  snprintf(buf, sizeof(buf), "%d", theme);
 
   #define EMIT(ev) do { if (!yaml_emitter_emit(&emitter, &ev)) { ok = false; goto cleanup; } } while (0)
 
@@ -377,8 +393,23 @@ bool SaveSettings(const char* fileName, int theme) {
 
   yaml_scalar_event_initialize(&e, NULL, NULL, (yaml_char_t*)"theme", -1, 1, 0, YAML_PLAIN_SCALAR_STYLE);
   EMIT(e);
-
+  snprintf(buf, sizeof(buf), "%d", s->theme);
   yaml_scalar_event_initialize(&e, NULL, NULL, (yaml_char_t*)buf, -1, 1, 0, YAML_PLAIN_SCALAR_STYLE);
+  EMIT(e);
+
+  yaml_scalar_event_initialize(&e, NULL, NULL, (yaml_char_t*)"trend_lines", -1, 1, 0, YAML_PLAIN_SCALAR_STYLE);
+  EMIT(e);
+  yaml_scalar_event_initialize(&e, NULL, NULL, (yaml_char_t*)(s->showSparklines ? "true" : "false"), -1, 1, 0, YAML_PLAIN_SCALAR_STYLE);
+  EMIT(e);
+
+  yaml_scalar_event_initialize(&e, NULL, NULL, (yaml_char_t*)"animated_values", -1, 1, 0, YAML_PLAIN_SCALAR_STYLE);
+  EMIT(e);
+  yaml_scalar_event_initialize(&e, NULL, NULL, (yaml_char_t*)(s->animateValues ? "true" : "false"), -1, 1, 0, YAML_PLAIN_SCALAR_STYLE);
+  EMIT(e);
+
+  yaml_scalar_event_initialize(&e, NULL, NULL, (yaml_char_t*)"change_indicators", -1, 1, 0, YAML_PLAIN_SCALAR_STYLE);
+  EMIT(e);
+  yaml_scalar_event_initialize(&e, NULL, NULL, (yaml_char_t*)(s->showIndicators ? "true" : "false"), -1, 1, 0, YAML_PLAIN_SCALAR_STYLE);
   EMIT(e);
 
   yaml_mapping_end_event_initialize(&e);
