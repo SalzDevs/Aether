@@ -50,6 +50,4 @@ extern const DashboardTheme THEME_PRESETS[];
 
 extern const int THEME_PRESET_COUNT;
 
-void applyThemePreset(int index);
-
 #endif

@@ -75,11 +75,14 @@ const DashboardTheme THEME_PRESETS[] = {
 
 const int THEME_PRESET_COUNT = sizeof(THEME_PRESETS)/sizeof(THEME);
 
-void applyThemePreset(int index) {
+static int g_themeIndex = 0; //current theme index
+
+static void applyThemePreset(int index) {
   if (index < 0 || index >=THEME_PRESET_COUNT) {
     printf("THEME INDEX OUT OF BOUNDS: (the theme you are trying to apply does not exist! Previous theme will be kept as the current!)\n");
     return;
   } 
+  g_themeIndex = index;
   THEME = THEME_PRESETS[index];
 }
 
@@ -474,10 +477,37 @@ static bool drawSettingsRow(const char* label, bool* value,
   return clicked;
 }
 
+static void drawThemeSwatcher(Rectangle area) {
+  const int n = THEME_PRESET_COUNT;
+  const float size = 30.0f;
+  const float gap = 14.0f;
+
+  float totalW = (float)n * size + (float)(n-1) * gap;
+  float x0 = area.x + (area.width - totalW) / 2.0f;
+  float y  = area.y + (area.height - size) / 2.0f;
+  
+  Vector2 mouse = GetMousePosition();
+  bool pressed = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+  
+  for (int i = 0; i < n; i++) {
+      Rectangle sw = {x0 + (size + gap) * (float)i, y, size, size};
+      DrawRectangleRounded(sw, 0.25f, 6, THEME_PRESETS[i].valueText);
+
+      if (i==g_themeIndex) {
+        Rectangle ring = {sw.x - 3, sw.y - 3, size + 6, size + 6};
+        DrawRectangleRoundedLines(ring, 0.25f, 6, THEME.titleText);
+      }
+
+      if (pressed && CheckCollisionPointRec(mouse,sw)) {
+        applyThemePreset(i); 
+      }
+  }
+}
+
 static void drawSettingsPanel(int screenWidth, int screenHeight) {
   const float panelW = 320.0f;
   const float rowH = 36.0f, headerH = 44.0f;
-  const float panelH = headerH + 3 * rowH + 12.0f;
+  const float panelH = headerH + 3 * rowH + 26.0f + 40.0f + 12.0f;
 
   // Dim overlay: pushes the dashboard back, modal-style
   DrawRectangle(0, 0, screenWidth, screenHeight, (Color){ 0, 0, 0, 150 });
@@ -499,7 +529,15 @@ static void drawSettingsPanel(int screenWidth, int screenHeight) {
   drawSettingsRow("Animated values", &g_animateValues, row);
   row.y += rowH;
   drawSettingsRow("Change indicators", &g_showIndicators, row);
+  row.y += rowH;
+  DrawLine((int)panel.x + THEME.padding, (int)row.y,
+           (int)(panel.x + panelW - THEME.padding), (int)row.y,
+           THEME.divider);
 
+  drawText("Color theme", (int)row.x + THEME.padding,
+           (int)row.y + 6, 13, THEME.titleText);
+
+  drawThemeSwatcher((Rectangle){ panel.x, row.y + 26.0f, panelW, 40.0f });
   // remember the panel rect for the outside-click check
 }
 
