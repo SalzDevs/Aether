@@ -2,7 +2,7 @@
 #define DASHBOARD_H
 
 #include "../sensor/sensor.h"
-#include "../History/history.h"
+#include "../history/history.h"
 #include <stddef.h>
 
 // Loads the dashboard font and animation state.

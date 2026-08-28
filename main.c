@@ -4,11 +4,10 @@
 
 #include "raylib.h"
 #include "sensor/sensor.h"
-#include "History/history.h"
+#include "history/history.h"
 #include "scheduler/scheduler.h"
 #include "config/config.h"
 #include "ui/dashboard.h"
-#include "ui/theme.h"
 
 #define HISTORY_CAPACITY 64
 

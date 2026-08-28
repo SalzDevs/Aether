@@ -147,7 +147,7 @@ Note: a `%` unit must be quoted (`"%"`) because libyaml reserves the percent sig
 ├── assets/fonts/ Bundled font (JetBrains Mono, SIL OFL)
 ├── config/       Sensor configuration loading and YAML data
 ├── docs/         Screenshots and demo media
-├── History/      Bounded per-sensor reading history (ring buffer)
+├── history/      Bounded per-sensor reading history (ring buffer)
 ├── scheduler/    Periodic task scheduling
 ├── sensor/       Sensor data types and simulation
 ├── ui/           Dashboard rendering, layout math, theme tokens (Raylib)

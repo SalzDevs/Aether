@@ -1,4 +1,4 @@
-#include "../History/history.h"
+#include "../history/history.h"
 #include "../sensor/sensor.h"
 #include <assert.h>
 #include <stdio.h>

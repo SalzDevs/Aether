@@ -25,7 +25,7 @@ On Linux: install `libraylib-dev` and `libyaml-dev` (names vary by distro).
 | --- | --- |
 | `config/` | YAML config parsing (libyaml event API) |
 | `sensor/` | The data model: a sensor is an id, a name, and a list of `{name, unit, value}` metrics |
-| `History/` | Bounded per-sensor reading history (ring buffers) |
+| `history/` | Bounded per-sensor reading history (ring buffers) |
 | `scheduler/` | Periodic task scheduling — decides *when*, never touches data structures |
 | `ui/` | Dashboard rendering (Raylib), theme tokens, and Raylib-free layout math |
 | `tests/` | One executable per module (`make test` runs them all) |
