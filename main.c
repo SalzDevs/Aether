@@ -8,6 +8,7 @@
 #include "scheduler/scheduler.h"
 #include "config/config.h"
 #include "ui/dashboard.h"
+#include "ui/theme.h"
 
 #define HISTORY_CAPACITY 64
 
@@ -41,7 +42,8 @@ int main(void) {
   if (!LoadSensorConfig("config/sensors.yaml", &sensorCount, &sensors)) return 1;
 
   InitDashboard(sensors, sensorCount);
-  
+  int themeIdx = 0;
+  if (LoadSettings(AETHER_SETTINGS_FILE, &themeIdx)) ApplyThemePreset(themeIdx);
   // One reading history per sensor, seeded with the config snapshot
   sensorHistory* histories = malloc(sensorCount * sizeof(sensorHistory));
   for (size_t i = 0; i < sensorCount; i++) {

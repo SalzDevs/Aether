@@ -1,5 +1,6 @@
 #include "dashboard.h"
 #include "theme.h"
+#include "../config/config.h"
 #include "layout.h"
 #include "raylib.h"
 #include <math.h>
@@ -77,9 +78,8 @@ const int THEME_PRESET_COUNT = sizeof(THEME_PRESETS)/sizeof(THEME);
 
 static int g_themeIndex = 0; //current theme index
 
-static void applyThemePreset(int index) {
+void ApplyThemePreset(int index) {
   if (index < 0 || index >=THEME_PRESET_COUNT) {
-    printf("THEME INDEX OUT OF BOUNDS: (the theme you are trying to apply does not exist! Previous theme will be kept as the current!)\n");
     return;
   } 
   g_themeIndex = index;
@@ -499,7 +499,8 @@ static void drawThemeSwatcher(Rectangle area) {
       }
 
       if (pressed && CheckCollisionPointRec(mouse,sw)) {
-        applyThemePreset(i); 
+        SaveSettings(AETHER_SETTINGS_FILE, i);
+        ApplyThemePreset(i);
       }
   }
 }

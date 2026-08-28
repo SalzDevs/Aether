@@ -13,3 +13,6 @@ dist/
 
 # Editor / OS
 .DS_Store
+
+# Runtime user settings (written by the app)
+config/settings.yaml

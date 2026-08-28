@@ -298,3 +298,103 @@ bool LoadSensorConfig(const char *fileName, size_t *count, sensorData **out) {
   *out = dt;
   return true;
 }
+
+bool LoadSettings(const char* fileName, int* outTheme) {
+  FILE* fptr = fopen(fileName, "r");
+  if (fptr == NULL) return false;
+
+  yaml_parser_t parser;
+  if (!yaml_parser_initialize(&parser)) { fclose(fptr); return false; }
+  yaml_parser_set_input_file(&parser, fptr);
+
+  bool ok = false, foundTheme = false;
+  int theme = 0;
+
+  do {
+    if (!expectEvent(&parser, YAML_STREAM_START_EVENT)) break;
+    if (!expectEvent(&parser, YAML_DOCUMENT_START_EVENT)) break;
+    if (!expectEvent(&parser, YAML_MAPPING_START_EVENT)) break;
+
+    while (true) {
+      yaml_event_t event;
+      if (!yaml_parser_parse(&parser, &event)) break;
+      if (event.type == YAML_MAPPING_END_EVENT) {
+        yaml_event_delete(&event);
+        break;
+      }
+      if (event.type != YAML_SCALAR_EVENT) {
+        yaml_event_delete(&event);
+        break;
+      }
+      char key[32];
+      snprintf(key, sizeof(key), "%s", (const char*)event.data.scalar.value);
+      yaml_event_delete(&event);
+
+      if (strcmp(key, "theme") == 0) {
+        if (!readInt(&parser, &theme)) break;
+        foundTheme = true;
+      } else {
+        if (!skipNode(&parser)) break;   // tolerate unknown keys
+      }
+    }
+
+    if (!expectEvent(&parser, YAML_DOCUMENT_END_EVENT)) break;
+    if (!expectEvent(&parser, YAML_STREAM_END_EVENT)) break;
+    ok = foundTheme;
+  } while (false);
+
+  yaml_parser_delete(&parser);
+  fclose(fptr);
+
+  if (ok) *outTheme = theme;
+  return ok;
+}
+
+
+bool SaveSettings(const char* fileName, int theme) {
+  FILE* f = fopen(fileName, "w");
+  if (f == NULL) return false;
+
+  yaml_emitter_t emitter;
+  if (!yaml_emitter_initialize(&emitter)) { fclose(f); return false; }
+  yaml_emitter_set_output_file(&emitter, f);
+
+  bool ok = true;
+  yaml_event_t e;
+  char buf[16];
+  snprintf(buf, sizeof(buf), "%d", theme);
+
+  #define EMIT(ev) do { if (!yaml_emitter_emit(&emitter, &ev)) { ok = false; goto cleanup; } } while (0)
+
+  yaml_stream_start_event_initialize(&e, YAML_UTF8_ENCODING);
+  EMIT(e);
+
+  yaml_document_start_event_initialize(&e, NULL, NULL, NULL, 0);
+  EMIT(e);
+
+  yaml_mapping_start_event_initialize(&e, NULL, NULL, 1, YAML_BLOCK_MAPPING_STYLE);
+  EMIT(e);
+
+  yaml_scalar_event_initialize(&e, NULL, NULL, (yaml_char_t*)"theme", -1, 1, 0, YAML_PLAIN_SCALAR_STYLE);
+  EMIT(e);
+
+  yaml_scalar_event_initialize(&e, NULL, NULL, (yaml_char_t*)buf, -1, 1, 0, YAML_PLAIN_SCALAR_STYLE);
+  EMIT(e);
+
+  yaml_mapping_end_event_initialize(&e);
+  EMIT(e);
+
+  yaml_document_end_event_initialize(&e, 0);
+  EMIT(e);
+
+  yaml_stream_end_event_initialize(&e);
+  EMIT(e);
+
+  #undef EMIT
+
+cleanup:
+  yaml_emitter_flush(&emitter);
+  yaml_emitter_delete(&emitter);
+  fclose(f);
+  return ok;
+}
