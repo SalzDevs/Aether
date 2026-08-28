@@ -44,6 +44,12 @@ typedef struct {
   float valueSmoothing;   // how fast displayed values chase actual ones (per second)
 } DashboardTheme;
 
-extern const DashboardTheme THEME;
+extern DashboardTheme THEME;
+
+extern const DashboardTheme THEME_PRESETS[];
+
+extern const int THEME_PRESET_COUNT;
+
+void applyThemePreset(int index);
 
 #endif
