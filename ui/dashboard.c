@@ -102,6 +102,9 @@ void InitSettings(const char* path) {
 static Font g_font;
 static bool g_fontLoaded = false;
 
+static Texture2D g_logo;
+static bool g_logoLoaded = false;
+
 // --- Animation state (one slot per metric, indexed sensor*MAX_METRICS+metric) ---
 static float* g_display = NULL;   // smoothed value currently shown
 static float* g_prev = NULL;      // last actual value seen (change detection)
@@ -154,9 +157,25 @@ void InitDashboard(const sensorData* sensors, size_t sensorCount) {
     g_font = GetFontDefault();
     g_fontLoaded = false;
   }
+
+  // In-app header logo (22px fits THEME.topBarHeight=34)
+  const char *logoPath = FileExists("logo.png") ? "logo.png" : TextFormat("%s/logo.png", GetApplicationDirectory());
+  if (FileExists(logoPath)) {
+    Image img = LoadImage(logoPath);
+    if (img.data != NULL) {
+      ImageResize(&img, 22, 22);
+      g_logo = LoadTextureFromImage(img);
+      g_logoLoaded = true;
+      UnloadImage(img);
+    }
+  }
 }
 
 void UnloadDashboard(void) {
+  if (g_logoLoaded) {
+    UnloadTexture(g_logo);
+    g_logoLoaded = false;
+  }
   if (g_fontLoaded) UnloadFont(g_font);
   g_fontLoaded = false;
   free(g_display); free(g_prev); free(g_dir); free(g_dirTimer);
@@ -727,8 +746,13 @@ void DrawDashboard(const sensorData* sensors, size_t sensorCount,
   if (g_display != NULL) updateAnimations(sensors, dt);
   ClearBackground(THEME.background);
 
-  // Top bar
-  drawText("AETHER", THEME.padding, 10, 16, THEME.titleText);
+  // Top bar — in-app logo + title
+  int titleX = THEME.padding;
+  if (g_logoLoaded) {
+    DrawTextureEx(g_logo, (Vector2){ (float)titleX, (THEME.topBarHeight - 22) / 2.0f }, 0.0f, 1.0f, WHITE);
+    titleX += 28;
+  }
+  drawText("AETHER", titleX, 10, 16, THEME.titleText);
 
   // Settings cogwheel: far top-right, timer sits left of it
   float iconRadius = 9.0f;

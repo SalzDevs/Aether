@@ -29,6 +29,19 @@ int main(void) {
 
   SetConfigFlags(FLAG_WINDOW_RESIZABLE);
   InitWindow(initialWidth, initialHeight, "Aether");
+  Image icon = LoadImage("logo.png");
+  if (icon.data == NULL) {
+    const char *dir = GetApplicationDirectory();
+    char path[512];
+    snprintf(path, sizeof(path), "%s/logo.png", dir);
+    icon = LoadImage(path);
+  }
+  if (icon.data != NULL) {
+    SetWindowIcon(icon);
+    UnloadImage(icon);
+  } else {
+    TraceLog(LOG_WARNING, "AETHER: logo.png not found for window icon");
+  }
   SetWindowMinSize(480, 320);
   SetTargetFPS(60);
 
