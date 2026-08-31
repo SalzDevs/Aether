@@ -38,8 +38,16 @@ Aether is a small Rust application that simulates sensor readings and displays t
 
 - Rust toolchain ([rustup](https://rustup.io))
 
-Raylib and serde-yaml are pulled in automatically by Cargo; there is no
-system dependency to install.
+Raylib and serde-yaml are pulled in automatically by Cargo. On Linux the
+raylib build additionally needs the X11/OpenGL development headers, e.g.:
+
+```sh
+sudo apt-get install cmake libx11-dev libxrandr-dev libxi-dev \
+  libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu1-mesa-dev \
+  libasound2-dev
+```
+
+macOS needs nothing beyond the Xcode command-line tools.
 
 ## Build and run
 

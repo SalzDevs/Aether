@@ -15,8 +15,9 @@ cargo test     # run the unit tests
 cargo run      # run the dashboard
 ```
 
-Raylib and serde-yaml are pulled in automatically by Cargo; there is no
-system dependency to install.
+Raylib and serde-yaml are pulled in automatically by Cargo. On Linux, the
+raylib build additionally needs the X11/OpenGL development headers (see the
+README's Requirements section).
 
 ## Where things live
 
