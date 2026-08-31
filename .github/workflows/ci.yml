@@ -16,10 +16,16 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y libyaml-dev pkg-config
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
 
-      - name: Build and run tests
-        run: |
-          make clean
-          make test
+      - name: Cache cargo registry and build
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run tests
+        run: cargo test
+
+      - name: Lint
+        run: cargo clippy --all-targets -- -D warnings

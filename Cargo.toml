@@ -1,0 +1,13 @@
+[package]
+name = "aether"
+version = "0.1.0"
+edition = "2021"
+description = "Aether is a small application that simulates sensor readings and displays them in a real-time dashboard."
+
+[dependencies]
+raylib = "5"
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"
+
+[profile.dev]
+opt-level = 1

@@ -5,7 +5,7 @@
 
 [![Aether CI](https://github.com/SalzDevs/Aether/actions/workflows/ci.yml/badge.svg)](https://github.com/SalzDevs/Aether/actions/workflows/ci.yml)
 
-Aether is a small C application that simulates sensor readings and displays them in a real-time Raylib dashboard.
+Aether is a small Rust application that simulates sensor readings and displays them in a real-time Raylib dashboard.
 
 <p align="center">
   <img src="docs/screenshot.png" width="720" alt="Aether dashboard">
@@ -36,46 +36,23 @@ Aether is a small C application that simulates sensor readings and displays them
 
 ## Requirements
 
-- C compiler with C99 support
-- `make`
-- `pkg-config`
-- Raylib
+- Rust toolchain ([rustup](https://rustup.io))
 
-### macOS
-
-```sh
-brew install raylib libyaml pkg-config
-```
-
-### Linux
-
-Install your distribution's development packages for:
-
-- GCC or Clang
-- Make
-- `pkg-config`
-- Raylib
-
-For example, package names may include `build-essential`, `pkg-config`, `libraylib-dev`, and `libyaml-dev`.
+Raylib and serde-yaml are pulled in automatically by Cargo; there is no
+system dependency to install.
 
 ## Build and run
 
 Build the application:
 
 ```sh
-make
+cargo build --release
 ```
 
 Run it:
 
 ```sh
-./main
-```
-
-Clean generated files:
-
-```sh
-make clean
+cargo run
 ```
 
 ## Run tests
@@ -83,7 +60,7 @@ make clean
 Build and run all unit tests:
 
 ```sh
-make test
+cargo test
 ```
 
 The test suite covers:
@@ -126,7 +103,7 @@ Each sensor requires:
 | `name` | Readable sensor name |
 | `metrics` | List of metrics, each with `name`, `unit` and `value` |
 
-Note: a `%` unit must be quoted (`"%"`) because libyaml reserves the percent sign.
+Note: a `%` unit must be quoted (`"%"`) because YAML reserves the percent sign.
 
 
 ## Controls
@@ -144,16 +121,18 @@ Note: a `%` unit must be quoted (`"%"`) because libyaml reserves the percent sig
 
 ```text
 .
-├── assets/fonts/ Bundled font (JetBrains Mono, SIL OFL)
-├── config/       Sensor configuration loading and YAML data
-├── docs/         Screenshots and demo media
-├── history/      Bounded per-sensor reading history (ring buffer)
-├── scheduler/    Periodic task scheduling
-├── sensor/       Sensor data types and simulation
-├── ui/           Dashboard rendering, layout math, theme tokens (Raylib)
-├── tests/        Unit tests
-├── main.c        Application entry point
-└── Makefile      Build and test commands
+├── assets/fonts/    Bundled font (JetBrains Mono, SIL OFL)
+├── config/          Sensor configuration YAML
+├── docs/            Screenshots and demo media
+├── src/config.rs    YAML config parsing (sensor registry and settings)
+├── src/sensor.rs    Sensor data types and simulation
+├── src/history.rs   Bounded per-sensor reading history (ring buffer)
+├── src/scheduler.rs Periodic task scheduling
+├── src/layout.rs    Raylib-free layout and formatting math
+├── src/theme.rs     Theme tokens and presets
+├── src/dashboard.rs Dashboard rendering (Raylib)
+├── src/main.rs      Application entry point
+└── Cargo.toml       Build and dependency manifest
 ```
 
 ## Architecture

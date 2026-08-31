@@ -1,12 +1,5 @@
 # Build artifacts
-*.o
-*.a
-*.so
-*.dylib
-main
-/test_*
-build/
-dist/
+/target
 
 # Local tooling
 .opencode/

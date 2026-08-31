@@ -1,52 +1,54 @@
 # Contributing to Aether
 
 Thanks for your interest in contributing! Aether is a small, intentionally
-simple C99 project — the goal is a readable, dependency-light codebase.
+simple Rust project — the goal is a readable, dependency-light codebase.
 
 ## Getting started
 
-Requirements: a C99 compiler, `make`, `pkg-config`, [raylib](https://www.raylib.com/)
-and libyaml.
+Requirements: a Rust toolchain (install via [rustup](https://rustup.io)).
 
 ```sh
 git clone https://github.com/SalzDevs/Aether.git
 cd Aether
-make        # build the app
-make test   # build and run the unit tests
-./main      # run the dashboard
+cargo build    # build the app
+cargo test     # run the unit tests
+cargo run      # run the dashboard
 ```
 
-On macOS: `brew install raylib libyaml pkg-config`
-On Linux: install `libraylib-dev` and `libyaml-dev` (names vary by distro).
+Raylib and serde-yaml are pulled in automatically by Cargo; there is no
+system dependency to install.
 
 ## Where things live
 
 | Path | Responsibility |
 | --- | --- |
-| `config/` | YAML config parsing (libyaml event API) |
-| `sensor/` | The data model: a sensor is an id, a name, and a list of `{name, unit, value}` metrics |
-| `history/` | Bounded per-sensor reading history (ring buffers) |
-| `scheduler/` | Periodic task scheduling — decides *when*, never touches data structures |
-| `ui/` | Dashboard rendering (Raylib), theme tokens, and Raylib-free layout math |
-| `tests/` | One executable per module (`make test` runs them all) |
+| `src/config.rs` | YAML config parsing (sensor registry and persisted settings) |
+| `src/sensor.rs` | The data model: a sensor is an id, a name, and a list of `{name, unit, value}` metrics |
+| `src/history.rs` | Bounded per-sensor reading history (ring buffers) |
+| `src/scheduler.rs` | Periodic task scheduling — decides *when*, never touches data structures |
+| `src/dashboard.rs` | Dashboard rendering (Raylib) |
+| `src/layout.rs` | Raylib-free layout and formatting math |
+| `src/theme.rs` | Theme tokens and presets |
 
 ## Ground rules
 
-- **C99, no warnings.** The build uses `-Wall -Wextra`; PRs with warnings won't pass CI.
+- **No warnings.** The build is checked with `cargo clippy -- -D warnings` in
+  CI; PRs with warnings won't pass.
 - **Keep modules in their lane.** The scheduler must not touch data structures,
-  the UI must not mutate sensor state, and nothing outside `sensor/` should
+  the UI must not mutate sensor state, and nothing outside `sensor.rs` should
   know which metrics exist. When in doubt, look at how existing modules
   exchange data (registries, ring buffers, action structs).
-- **Tests for logic.** Pure functions belong in `ui/layout.c` or the module
-  they extend, with tests in `tests/test_*.c`. Rendering code is exempt.
-- **Match the existing style**: 2-space indent, `snake_case` functions,
-  `camelCase` locals, comments explain *why*.
+- **Tests for logic.** Pure functions live in `src/layout.rs` or the module
+  they extend, with tests alongside in `#[cfg(test)]` blocks. Rendering code
+  is exempt.
+- **Match the existing style**: `rustfmt` formatting, `snake_case` functions,
+  comments explain *why*.
 
 ## Submitting changes
 
 1. Open or comment on an issue first if the change is architectural.
 2. Create a feature branch.
-3. Make sure `make test` passes and `make` builds without warnings.
+3. Make sure `cargo test` passes and `cargo clippy --all-targets` is clean.
 4. Open a pull request with a short description of *what* and *why*.
 
 Small, focused PRs get merged fastest.
